@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-08-17-envsel-header-dropdown-typert-remote.md
+2026-08-17-envsel-header-dropdown-typert-remote.md: 3fbf5484827db0edbcb030356ff385567fc2bdda
+2026-08-17-envsel-header-dropdown-typert-remote.zh.md: f199265be99fe3695cb8715891ad19e55822f9b3
