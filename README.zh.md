@@ -1,73 +1,105 @@
-# dsh-envsel — 会话环境选择器
+# dsh-envsel
 
-[English](README.md) | 中文
+[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）的会话环境选择器。按语言槽位 —— Python、R、CLI 工具 —— 每个槽位各持有一个来自 **conda**、**独立 R** 安装、**WSL** 发行版或**手动固定路径**的首选环境。选择按会话隔离、重启后保留，并从下一轮起对模型生效。
 
-> **对外名（仓库/文档名）**：dsh-envsel · **包内名（代码标识符）**：`@deepseek-ai/dsh-envsel` / `@deepseek-ai/dsh-client-ui-envsel`
+这是一个**独立的、可通过 npm 安装的 DSH 插件**。用 `dsh plugin add` 安装即可 —— 无需打源码补丁，也无需 monorepo 检出。
 
-dsh-envsel 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的会话环境选择器：像 Jupyter 内核选择器一样，为每个会话按语言（Python / R / CLI 工具）指定一个「优先环境」，可选择 conda 环境、独立 R 安装、WSL 发行版，或用户手动钉住的自定义路径。选择结果持久化为会话事件（`envsel/selection`）；浏览器的页头下拉、`/env` 命令、`session_env` 模型工具共用同一个选择存储，每次 shell 调用自动注入 `DSH_ENV_*` 事实，让模型和命令执行使用同一套解释器。
+## 功能
 
-## 功能特性
+- **`/env` 命令** —— 在对话中查看、设置、清空和列出环境。
+- **`session_env` 模型工具** —— 智能体可以自行列出、选择、固定和取消固定环境。
+- **`DSH_ENV_*` shell 事实** —— 每次 shell 调用都会看到会话所选环境的 `DSH_ENV_PYTHON`、`DSH_ENV_RSCRIPT`、`DSH_ENV_CLI_PREFIX`。
+- **头部下拉框** —— 会话头部提供按语言（Python / R / CLI 工具）选择的面板，并带「添加路径」表单，可固定任意解释器或安装目录。
+- **跨平台发现** —— conda 环境、独立 R（Windows `Program Files`、macOS 框架 + Homebrew、Linux `/opt/R`）、Windows 上的 WSL 发行版，以及手动固定的路径。WSL 扫描在非 Windows 主机上自动跳过。
 
-- **每会话独立选择**：`python` / `r` / `cli` 三个槽位各持一个环境，同一会话可同时用 `scRNAv2`（Python）、`R-4.5.1`（独立 R）和 `base`（CLI）。
-- **跨平台自动发现**：conda（`conda env list --json`）、独立 R（Windows Program Files / macOS Framework 与 Homebrew / Linux `/opt/R`、`/usr`、`/usr/local`）、WSL（仅 Windows，非 Windows 永不启动 `wsl.exe`）。
-- **手动钉住路径**：自动发现漏掉时，可在页头「添加路径」、`/env add <路径>` 或 `session_env action=pin` 钉住解释器或安装目录；条目写入本机 `$DSH_HOME/envsel-pinned.json` 缓存，之后每个会话都能看到，并可用 `/env unpin custom:<名>` 移除。
-- **持久可重放**：选择是 log-only 会话事件，重启后按折叠值恢复；从不进入模型转录——模型通过运行时上下文快照得知当前选择。
-- **单一存储多入口**：页头下拉、`/env` 命令、`session_env` 工具是同一份 `envsel/selection` 事件的三个读写者，UI 与命令行永不分歧。
+## 环境要求
 
-## 仓库结构
+- DeepSeek Harness **0.1.0-rc.7 或兼容的 0.1.0-rc.x**（web profile）。插件的 peer 依赖是该版本自带的官方 `@deepseek-ai/dsh-*@0.1.0-rc.7` 包。
+- PATH 上有 `pnpm`（`dsh plugin` 会用到）。
 
+## 安装
+
+```sh
+dsh plugin --profile web add @beihzb/dsh-envsel
 ```
-packages/shell/envsel/        # 宿主端插件包：发现、pin 缓存、/env 命令、session_env 工具、envsel Remote
-packages/client/ui-envsel/    # 浏览器端插件包：页头下拉 UI（含「添加路径」表单）与本地化文案
-patches/host-integration.patch # 将两个新包织入 deepseek-harness 的宿主侧改动（供参考——非独立可运行插件）
-docs/agent-notes/             # 设计决策记录（英文 + 中文）
-LICENSE                       # MIT（沿用 deepseek-harness）
+
+重启 `dsh web`，打开一个已有会话，对话头部就会出现 **Env** 下拉框；`/env` 和 `session_env` 立即可用。
+
+从本地检出安装：
+
+```sh
+dsh plugin --profile web add "file:/绝对/路径/到/本仓库"
 ```
-
-## 集成进 deepseek-harness
-
-这两个包**不是独立可安装的插件**：它们织入 [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) monorepo，依赖 `@deepseek-ai/cordis`、`dsh-typert`（Remote 代码生成）、`dsh-api-remotes`（客户端装配）、`dsh-shell-env`（`DSH_ENV_*` 注入）等内部包。在官方仓库中集成需要：
-
-1. 将 `packages/shell/envsel/` 与 `packages/client/ui-envsel/` 复制到对应位置；
-2. 在 `packages/bundle/web-app/cordis.patch.yml` 与 `package.json` 登记两行插件；
-3. 在 `tsconfig.base.json` / `tsconfig.client.json` / `tsconfig.host.json` 与 `packages/api/remotes` 中登记路径与远程装配；
-4. 在 `packages/core/session/src/known-event-types.ts` 登记 `envsel/selection` 事件；
-5. 运行 `pnpm install`、`tsc -b` 与 tsdown 构建（宿主与客户端两遍），重启 DSH 后生效。
-
-`patches/host-integration.patch` 是当前官方仓库 HEAD（`47f9438`）上这组既有文件改动的完整 diff，可作为集成参考；新包本身已在本仓库以完整源码形式提供。
 
 ## 使用
 
-### 浏览器
-
-会话页头右侧的「环境」下拉：每个槽位列出可用环境，一键分配/清除；面板顶部的「添加路径」可钉住一个本机解释器或安装目录路径。
-
-### 命令
+### `/env` 命令
 
 ```
-/env python=scRNAv2 r=R-4.4.1 cli=base # 一次设置多个槽位
-/env list [关键词]                       # 列出目录
-/env add /opt/homebrew/bin/Rscript     # 钉住一个路径（macOS）
-/env add /usr/bin/Rscript              # 钉住系统 R（Linux）
-/env unpin custom:<名>                   # 移除一条钉住记录
-/env clear                              # 清空全部槽位
+/env                        查看当前选择
+/env python=scRNAv2         设置 Python 槽位（conda 名 / 独立R名 / wsl:发行版:名 / custom:名）
+/env r=R-4.5.1              设置 R 槽位
+/env cli=base               设置 CLI 槽位（PATH 前缀）
+/env python=                清空某个槽位
+/env list [过滤词]           列出所有可发现的环境
+/env add <路径>              把解释器或安装目录记入本机缓存
+/env unpin custom:<名>       移除一条固定路径
+/env clear                  清空全部选择
+/env wsl                    重新扫描 WSL 发行版（仅 Windows）
 ```
 
-### 模型工具
+### `session_env` 工具
 
-`session_env`：`action=list` 列出目录、`action=get` 查看当前选择、`action=set` 分配/清除一个槽位、`action=pin|unpin` 管理钉住路径。
+智能体可以用 `action=list|get|set|pin|unpin` 自行管理选择。
 
-### Shell 事实
+### 头部下拉框
 
-每次 shell 调用自动携带 `DSH_ENV_PYTHON`、`DSH_ENV_RSCRIPT`、`DSH_ENV_CLI_PREFIX`，描述当前槽位选定的解释器。
+会话头部的 **Env** 按钮会打开按语言分类的下拉面板。目录在首次打开时惰性扫描（探测 conda 和 WSL 需要几秒）。「添加路径」可把任意绝对解释器或安装路径固定进本机缓存。
+
+## 配置
+
+插件无需任何配置即可工作。可选的在 profile 的 `cordis.patch.yml` 中给 `envsel` 行加 `config`：
+
+| 键 | 默认值 | 含义 |
+| --- | --- | --- |
+| `listTtlMs` | `300000` | 目录缓存 TTL（毫秒）。 |
+| `condaCommand` | `conda` | conda 可执行文件名或绝对路径。 |
+| `standaloneRRoots` | `[]` | 在平台默认值之后额外扫描的独立 R 根目录。 |
+| `wslEnabled` | `true` | 是否启用 WSL 发现（仅 Windows）。 |
+| `registerTool` | `true` | 是否注册 `session_env` 模型工具。 |
+| `probeTimeoutMs` | `20000` | 每次探测的看门狗超时（毫秒）。 |
+
+示例：
+
+```yaml
+# 在你的 profile 的 cordis.patch.yml 中，位于 bundle 层之后
+- id: envsel
+  name: '@beihzb/dsh-envsel'
+  config:
+    wslEnabled: false
+    registerTool: true
+```
+
+## 选择如何存储
+
+选择保存在本机 JSON 存储（`$DSH_HOME/envsel-state.json`，按会话 id 键控）中 —— **而不是会话事件日志**。harness 的 session-persistence 读取器会拒绝包含未知事件类型的日志（除非事件标记为可忽略），而 `Session.append` 没有为下游插件提供设置该标记的途径。把选择变更写进日志会让该会话在重启后无法读取，因此本插件自带独立的状态存储。
+
+## 开发
+
+```sh
+pnpm install
+pnpm run build    # tsc（类型）+ tsdown（lib/index.js 宿主 + lib/client.js 浏览器包）
+pnpm run test     # node:test 单元测试
+```
+
+构建产生两个产物：`lib/index.js`（宿主插件，从包根加载）和 `lib/client.js`（浏览器包，由 client-modules 扫描器根据包的 `dsh.client` 声明提供）。单个包可以同时是宿主行和 client 行。
 
 ## 已知限制
 
-- 发现逻辑依赖具体安装布局（conda 元数据、R 目录结构、WSL UTF-16 输出），随发行版变化可能静默漏扫；手动钉住是兜底。
-- 钉住路径是本机缓存（`$DSH_HOME/envsel-pinned.json`），不随会话跨机器迁移；同名目录的两个钉住记录共享 `custom:<名>` 地址，需按原始路径取消。
-- WSL 发现仅限 Windows，且冷启动发行版探测可能耗时数秒（受 `listTtlMs` 缓存）。
-- 系统 Python（`/usr/bin/python3`、Xcode stub、pyenv shim）不会自动入目录，除非手动钉住。
+- **没有按会话的 runtime-context 文本。** 官方 `AssembleContext` 没有 agent 绑定，因此选择不会渲染进模型的系统提示。模型仍会通过每次 shell 调用的 `DSH_ENV_*` 看到选择，并可用 `/env` / `session_env` 查询。
+- **peer 绑定 0.1.0-rc.x。** 插件声明 `@deepseek-ai/dsh-*@^0.1.0-rc.7` peer。未来改变这些 API 的 DSH 大/小版本需要插件跟版。
+- **选择不属于会话日志。** 它们会在重启后保留在 `envsel-state.json` 中，但不会从（或由）会话日志重放。
 
-## 许可证
+## License
 
-MIT — 见 [LICENSE](LICENSE)。代码源自 [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)，版权归 DeepSeek 所有。
+MIT

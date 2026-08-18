@@ -1,0 +1,11 @@
+# dsh-envsel bundle patch: mount the session environment selector.
+# Applied after dsh-base's insert; rows here override base rows by id.
+#
+# `envsel` is simultaneously a host row (the node half registers the /env
+# command, the session_env tool, the DSH_ENV_* shell facts, and the `envsel`
+# Remote) and a dsh.client row (the modules node half scans this package's
+# dsh.client declaration and serves lib/client.js for the header dropdown).
+
+- insert:
+    - id: envsel
+      name: '@beihzb/dsh-envsel'

@@ -1,73 +1,105 @@
-# dsh-envsel — Session Environment Selector
+# dsh-envsel
 
-English | [中文](README.zh.md)
+Session environment selector for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH). Per-language slots — Python, R, CLI tools — each hold one first-priority environment drawn from **conda**, **standalone R** installs, **WSL** distributions, or **user-pinned custom paths**. Selections are per-session, persisted across restarts, and take effect for the model from the very next turn.
 
-> **External name (repo / docs)**: dsh-envsel · **Package identifiers (code)**: `@deepseek-ai/dsh-envsel` / `@deepseek-ai/dsh-client-ui-envsel`
-
-dsh-envsel is the session environment selector for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): like a Jupyter kernel picker, it assigns each session one first-priority environment per language (Python / R / CLI tools), chosen from conda environments, standalone R installs, WSL distributions, or user-pinned custom paths. The selection is persisted as a session event (`envsel/selection`); the browser header dropdown, the `/env` command, and the `session_env` model tool share the same selection store, and every shell call automatically receives `DSH_ENV_*` facts so the model and command execution use the same interpreters.
+This is a **standalone, npm-installable DSH plugin**. It installs with `dsh plugin add` — no source patching, no monorepo checkout.
 
 ## Features
 
-- **Per-session independent selection**: three slots `python` / `r` / `cli` each hold one environment, so one session can simultaneously use `scRNAv2` (Python), `R-4.5.1` (standalone R), and `base` (CLI).
-- **Cross-platform automatic discovery**: conda (`conda env list --json`), standalone R (Windows Program Files / macOS Framework and Homebrew / Linux `/opt/R`, `/usr`, `/usr/local`), WSL (Windows only — non-Windows hosts never spawn `wsl.exe`).
-- **Manual path pinning**: when discovery misses an install, pin an interpreter or install directory via the header "添加路径", `/env add <path>`, or `session_env action=pin`; the entry is written to the machine-local `$DSH_HOME/envsel-pinned.json` cache, visible to every later session, and removable with `/env unpin custom:<name>`.
-- **Durable and replayable**: the selection is a log-only session event restored from its folded value after restart; it never enters the model transcript — the model learns the current selection from the runtime-context snapshot.
-- **One store, many surfaces**: the header dropdown, `/env`, and `session_env` are three readers/writers of the same `envsel/selection` event, so the UI and the command line never diverge.
+- **`/env` command** — read, assign, clear, and list environments from the chat.
+- **`session_env` model tool** — the agent can list, select, pin, and unpin environments on its own.
+- **`DSH_ENV_*` shell facts** — every shell call sees `DSH_ENV_PYTHON`, `DSH_ENV_RSCRIPT`, `DSH_ENV_CLI_PREFIX` for the session's selection.
+- **Header dropdown** — a per-language selector in the conversation header (Python / R / CLI tools), with an "Add path" form to pin any interpreter or install directory.
+- **Cross-platform discovery** — conda environments, standalone R (Windows `Program Files`, macOS framework + Homebrew, Linux `/opt/R`), WSL distributions on Windows, and manually pinned paths. WSL scanning is skipped automatically on non-Windows hosts.
 
-## Repository layout
+## Requirements
 
+- DeepSeek Harness **0.1.0-rc.7 or a compatible 0.1.0-rc.x** (the web profile). The plugin's peers are the official `@deepseek-ai/dsh-*@0.1.0-rc.7` packages that ship with that release.
+- `pnpm` on PATH (used by `dsh plugin`).
+
+## Installation
+
+```sh
+dsh plugin --profile web add @beihzb/dsh-envsel
 ```
-packages/shell/envsel/        # Host-side plugin: discovery, pin cache, /env command, session_env tool, envsel Remote
-packages/client/ui-envsel/    # Browser-side plugin: header dropdown UI (incl. the add-path form) and localized copy
-patches/host-integration.patch # Host-side changes that weave the two packages into deepseek-harness (reference only — not a standalone plugin)
-docs/agent-notes/             # Design decision records (English + Chinese)
-LICENSE                       # MIT (inherited from deepseek-harness)
+
+Restart `dsh web`, open an existing session, and the **Env** dropdown appears in the conversation header; `/env` and `session_env` work immediately.
+
+Installing from a local checkout instead:
+
+```sh
+dsh plugin --profile web add "file:/absolute/path/to/this/repo"
 ```
-
-## Integrating into deepseek-harness
-
-These two packages are **not standalone-installable plugins**: they weave into the [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) monorepo and depend on internal packages such as `@deepseek-ai/cordis`, `dsh-typert` (Remote code generation), `dsh-api-remotes` (client assembly), and `dsh-shell-env` (`DSH_ENV_*` injection). Integrating into the upstream repository requires:
-
-1. Copy `packages/shell/envsel/` and `packages/client/ui-envsel/` into their corresponding locations;
-2. Register the two plugin rows in `packages/bundle/web-app/cordis.patch.yml` and `package.json`;
-3. Register the paths and Remote assembly in `tsconfig.base.json` / `tsconfig.client.json` / `tsconfig.host.json` and `packages/api/remotes`;
-4. Register the `envsel/selection` event in `packages/core/session/src/known-event-types.ts`;
-5. Run `pnpm install`, `tsc -b` and the tsdown build (host and client passes), then restart DSH.
-
-`patches/host-integration.patch` is the complete diff of these existing-file changes against the current upstream HEAD (`47f9438`) and serves as an integration reference; the new packages themselves are provided here as full source.
 
 ## Usage
 
-### Browser
-
-The "环境" dropdown at the right of the session header: each slot lists the available environments for one-click assign/clear; the "添加路径" form at the top of the panel pins a local interpreter or install-directory path.
-
-### Commands
+### `/env` command
 
 ```
-/env python=scRNAv2 r=R-4.4.1 cli=base # set several slots at once
-/env list [keyword]                    # list the catalog
-/env add /opt/homebrew/bin/Rscript    # pin a path (macOS)
-/env add /usr/bin/Rscript             # pin a system R (Linux)
-/env unpin custom:<name>               # remove one pinned record
-/env clear                             # clear all slots
+/env                        show the current selection
+/env python=scRNAv2         set the Python slot (conda name / R name / wsl:distro:name / custom:name)
+/env r=R-4.5.1              set the R slot
+/env cli=base               set the CLI slot (PATH prefix)
+/env python=                clear one slot
+/env list [filter]          list all discoverable environments
+/env add <path>             remember an interpreter or install directory on this machine
+/env unpin custom:<name>    forget a pinned path
+/env clear                  clear every slot
+/env wsl                    rescan WSL distributions (Windows only)
 ```
 
-### Model tool
+### `session_env` tool
 
-`session_env`: `action=list` lists the catalog, `action=get` reads the current selection, `action=set` assigns/clears one slot, `action=pin|unpin` manages pinned paths.
+The model can manage selections itself with `action=list|get|set|pin|unpin`.
 
-### Shell facts
+### Header dropdown
 
-Every shell call automatically carries `DSH_ENV_PYTHON`, `DSH_ENV_RSCRIPT`, and `DSH_ENV_CLI_PREFIX` describing the interpreters selected for the current slots.
+The **Env** button in the conversation header opens per-language dropdowns. The catalog is scanned lazily on first open (probing conda and WSL takes a few seconds). "Add path" pins any absolute interpreter or install path into the machine-local cache.
+
+## Configuration
+
+The plugin works with no configuration. Optional `config` on the `envsel` row in your profile's `cordis.patch.yml`:
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `listTtlMs` | `300000` | Catalog cache TTL in milliseconds. |
+| `condaCommand` | `conda` | Conda executable name or absolute path. |
+| `standaloneRRoots` | `[]` | Extra standalone-R roots scanned after the platform defaults. |
+| `wslEnabled` | `true` | Whether WSL discovery is enabled (Windows only). |
+| `registerTool` | `true` | Whether the `session_env` model tool is registered. |
+| `probeTimeoutMs` | `20000` | Per-probe watchdog timeout in milliseconds. |
+
+Example:
+
+```yaml
+# in your profile's cordis.patch.yml, after the bundle layer
+- id: envsel
+  name: '@beihzb/dsh-envsel'
+  config:
+    wslEnabled: false
+    registerTool: true
+```
+
+## How it stores selections
+
+Selections persist in a machine-local JSON store (`$DSH_HOME/envsel-state.json`, keyed by session id) — **not** in the session event log. The harness's session-persistence reader refuses a log containing an event type it does not know unless the event is marked ignorable, and `Session.append` provides no way for a downstream plugin to set that marker. Writing selection changes into the log would make the owning session unreadable after a restart, so this plugin owns its own durable state instead.
+
+## Development
+
+```sh
+pnpm install
+pnpm run build    # tsc (types) + tsdown (lib/index.js host + lib/client.js browser bundle)
+pnpm run test     # node:test unit tests
+```
+
+The build produces two artifacts: `lib/index.js` (the host plugin, loaded from the package root) and `lib/client.js` (the browser bundle, served by the client-modules scanner from the package's `dsh.client` declaration). A single package can be both a host row and a client row.
 
 ## Known limitations
 
-- Discovery depends on concrete install layouts (conda metadata, R directory structure, WSL UTF-16 output) and may silently miss installs as distributions evolve; manual pinning is the fallback.
-- Pinned paths are a machine-local cache (`$DSH_HOME/envsel-pinned.json`) that does not travel with a session to another machine; two pins sharing a leaf directory name share the `custom:<name>` address and must be unpinned by the original path.
-- WSL discovery is Windows-only, and cold-starting a distribution can take seconds (cached under `listTtlMs`).
-- System Python (`/usr/bin/python3`, Xcode stubs, pyenv shims) is not auto-enrolled unless manually pinned.
+- **No per-session runtime-context text.** The official `AssembleContext` has no agent binding, so the selection is not rendered into the model's system prompt. The model still sees the selection through `DSH_ENV_*` on every shell call and can query it with `/env` / `session_env`.
+- **Peer-bound to 0.1.0-rc.x.** The plugin declares `@deepseek-ai/dsh-*@^0.1.0-rc.7` peers. A future DSH major/minor that changes these APIs needs a plugin update.
+- **Selections are not part of the session log.** They survive restarts in `envsel-state.json` but are not replayed from (or carried by) session logs.
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Code originates from [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness), copyright DeepSeek.
+MIT

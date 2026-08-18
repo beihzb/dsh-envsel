@@ -1,8 +1,9 @@
 node_modules/
-lib/
 .cache/
 *.log
 *.map
+*.tsbuildinfo
 .DS_Store
 Thumbs.db
 envsel-pinned.json
+envsel-state.json
