@@ -94,7 +94,13 @@ const cssModulesPlugin = {
 export default [
   {
     name: '@beihaizb/dsh-envsel',
-    entry: { index: 'lib/types/index.js' },
+    entry: {
+      index: 'lib/types/index.js',
+      // Host Typert manifest (the `./typert` export the typert-loader registers
+      // into the strict `typert.local` registry). Bundles the shared client
+      // descriptors; zod stays external.
+      'typert-host': 'lib/types/typert-host.js',
+    },
     outDir: 'lib',
     format: ['esm'],
     platform: 'node',

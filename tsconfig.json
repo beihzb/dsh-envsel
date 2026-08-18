@@ -25,6 +25,7 @@
     "src/pin-cache.ts",
     "src/remote.ts",
     "src/types.ts",
-    "src/state.ts"
+    "src/state.ts",
+    "src/typert-host.ts"
   ]
 }
