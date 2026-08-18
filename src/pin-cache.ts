@@ -10,6 +10,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-fs'
 import { dshHomePath } from '@deepseek-ai/dsh-home-paths'
 import { probeCustomPath } from './discover.ts'
+import { writeHomeFile } from './home-io.ts'
 import type { EnvEntry } from './types.ts'
 
 /** On-disk file name of the machine-local pin cache under the harness home. */
@@ -89,7 +90,7 @@ export async function readPinnedPaths(ctx: Context): Promise<PinnedPath[]> {
  */
 export async function writePinnedPaths(ctx: Context, pins: readonly PinnedPath[]): Promise<void> {
   const target = await ctx.fs.resolve(pinnedCachePath())
-  await ctx.fs.writeText(target, serializePinnedDocument(pins))
+  await writeHomeFile(ctx, target, serializePinnedDocument(pins))
 }
 
 /** Result of probing every remembered path into catalog entries. */

@@ -22,6 +22,7 @@
   "include": [
     "src/index.ts",
     "src/discover.ts",
+    "src/home-io.ts",
     "src/pin-cache.ts",
     "src/remote.ts",
     "src/types.ts",

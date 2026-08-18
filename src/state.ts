@@ -13,6 +13,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-fs'
 import { dshHomePath } from '@deepseek-ai/dsh-home-paths'
+import { writeHomeFile } from './home-io.ts'
 import type { EnvSelection, SessionId } from './types.ts'
 
 /** On-disk file name of the selection store under the harness home. */
@@ -91,7 +92,7 @@ export async function readAllSelections(ctx: Context): Promise<Record<string, En
  */
 export async function writeAllSelections(ctx: Context, selections: Record<string, EnvSelection>): Promise<void> {
   const target = await ctx.fs.resolve(statePath())
-  await ctx.fs.writeText(target, serializeStateDocument(selections))
+  await writeHomeFile(ctx, target, serializeStateDocument(selections))
 }
 
 /**
