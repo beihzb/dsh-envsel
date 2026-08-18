@@ -18,6 +18,7 @@ import type { EnvSlot } from '../types.ts'
 import { EnvselHeaderButton } from './EnvselHeaderButton.tsx'
 import type { EnvselHeaderButtonInjected, EnvselRemoteOutcome } from './EnvselHeaderButton.tsx'
 import { en, NS, zh, type EnvselLocaleKey } from './locales.ts'
+import type { TypertRemoteNamespaceMap } from '@deepseek-ai/dsh-typert-protocol'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -31,6 +32,9 @@ export type { EnvselLocaleKey } from './locales.ts'
 
 /** Required services: the slot registry, the Remote service, and the copy. */
 export const inject = ['slots', 'locale', 'remote']
+
+/** The `envsel` namespace shape contributed by this package's ambient merge. */
+type EnvselNamespace = TypertRemoteNamespaceMap['envsel']
 
 /** Rejected outcome built from a transport throw. */
 function transportFailure(error: unknown): EnvselRemoteOutcome<never> {
@@ -49,17 +53,22 @@ function transportFailure(error: unknown): EnvselRemoteOutcome<never> {
  * @param ctx - client root context.
  */
 export async function apply(ctx: ClientContext): Promise<void> {
-  // Mount the `envsel` namespace on the Remote service so ctx.remote.envsel
-  // resolves; the contribution's descriptors were generated from the host
-  // EnvselRemoteService and travel inlined in this package's client bundle.
+  // Mount the `envsel` namespace on the Remote service. Consumers cannot read
+  // ctx.remote.envsel directly: Cordis proxies `remote.envsel` only through
+  // the inject chain or a declared accessor, and a plugin cannot inject a
+  // namespace it mounts itself (that would deadlock its own apply). The
+  // injected face therefore reads the mounted namespace from the global
+  // service store via ctx.get below.
   await ctx.remote.$mount(envselContribution)
 
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-envsel: dictionaries')
 
-  const injected = (): EnvselHeaderButtonInjected => ({
+  const injected = (): EnvselHeaderButtonInjected => {
+    const envsel = ctx.get('remote.envsel') as EnvselNamespace
+    return {
     listCatalog: async () => {
       try {
-        const carried = await ctx.remote.envsel.list()
+        const carried = await envsel.list()
         if (!carried.ok) return { ok: false, error: carried.error }
         return { ok: true, value: carried.value }
       } catch (error) {
@@ -68,7 +77,7 @@ export async function apply(ctx: ClientContext): Promise<void> {
     },
     getSelection: async (id) => {
       try {
-        const carried = await ctx.remote.envsel.get({ sessionId: id })
+        const carried = await envsel.get({ sessionId: id })
         if (!carried.ok) return { ok: false, error: carried.error }
         const business = carried.value
         return business.ok
@@ -80,7 +89,7 @@ export async function apply(ctx: ClientContext): Promise<void> {
     },
     setSelection: async (id, slot: EnvSlot, address: string) => {
       try {
-        const carried = await ctx.remote.envsel.set({ sessionId: id, slot, address })
+        const carried = await envsel.set({ sessionId: id, slot, address })
         if (!carried.ok) return { ok: false, error: carried.error }
         const business = carried.value
         return business.ok
@@ -92,7 +101,7 @@ export async function apply(ctx: ClientContext): Promise<void> {
     },
     pinPath: async (path) => {
       try {
-        const carried = await ctx.remote.envsel.pin({ path })
+        const carried = await envsel.pin({ path })
         if (!carried.ok) return { ok: false, error: carried.error }
         const business = carried.value
         return business.ok
@@ -104,7 +113,7 @@ export async function apply(ctx: ClientContext): Promise<void> {
     },
     unpinPath: async (address) => {
       try {
-        const carried = await ctx.remote.envsel.unpin({ address })
+        const carried = await envsel.unpin({ address })
         if (!carried.ok) return { ok: false, error: carried.error }
         const business = carried.value
         return business.ok
@@ -114,7 +123,8 @@ export async function apply(ctx: ClientContext): Promise<void> {
         return transportFailure(error)
       }
     },
-  })
+    }
+  }
 
   ctx.slots.inject('conversation.session.header.utilities', () => ctx.slots.register({
     name: 'conversation.session.header.utilities',
