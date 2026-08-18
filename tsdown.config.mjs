@@ -1,5 +1,5 @@
 /**
- * tsdown config for the dsh-envsel plugin package.
+ * tsdown config for the @beihaizb/dsh-envsel plugin package.
  *
  * Two artifacts:
  *   1. lib/index.js   — the host plugin (node ESM). Every @deepseek-ai/*
@@ -75,7 +75,7 @@ const cssModulesPlugin = {
     })
     const classMap = {}
     for (const [local, exp] of Object.entries(cssExports ?? {})) classMap[local] = exp.name
-    const id = 'dsh-envsel'
+    const id = '@beihaizb/dsh-envsel'
     return [
       `const css = ${JSON.stringify(code.toString())};`,
       `const tagId = ${JSON.stringify(`${id}/${basename(fileId)}`)};`,
@@ -93,7 +93,7 @@ const cssModulesPlugin = {
 
 export default [
   {
-    name: 'dsh-envsel',
+    name: '@beihaizb/dsh-envsel',
     entry: { index: 'lib/types/index.js' },
     outDir: 'lib',
     format: ['esm'],
@@ -105,7 +105,7 @@ export default [
     deps: { neverBundle: HOST_EXTERNALS },
   },
   {
-    name: 'dsh-envsel/client',
+    name: '@beihaizb/dsh-envsel/client',
     entry: { client: 'lib/types/client/index.js' },
     outDir: 'lib',
     format: 'cjs',
@@ -125,7 +125,7 @@ export default [
     plugins: [cssModulesPlugin],
     outputOptions: {
       entryFileNames: 'client.js',
-      banner: `window.__ModuleLoader__.load({ id: 'dsh-envsel', factory: (require) => {`,
+      banner: `window.__ModuleLoader__.load({ id: '@beihaizb/dsh-envsel', factory: (require) => {`,
       footer: 'return module.exports; } });',
       intro: 'var module = { exports: {} }; var exports = module.exports;',
     },

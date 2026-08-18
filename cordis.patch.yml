@@ -1,4 +1,4 @@
-# dsh-envsel bundle patch: mount the session environment selector.
+# @beihaizb/dsh-envsel bundle patch: mount the session environment selector.
 # Applied after dsh-base's insert; rows here override base rows by id.
 #
 # `envsel` is simultaneously a host row (the node half registers the /env
@@ -8,4 +8,4 @@
 
 - insert:
     - id: envsel
-      name: 'dsh-envsel'
+      name: '@beihaizb/dsh-envsel'

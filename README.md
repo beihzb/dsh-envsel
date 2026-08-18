@@ -20,7 +20,7 @@ This is a **standalone, npm-installable DSH plugin**. It installs with `dsh plug
 ## Installation
 
 ```sh
-dsh plugin --profile web add dsh-envsel
+dsh plugin --profile web add @beihaizb/dsh-envsel
 ```
 
 Restart `dsh web`, open an existing session, and the **Env** dropdown appears in the conversation header; `/env` and `session_env` work immediately.

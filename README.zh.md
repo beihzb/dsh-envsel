@@ -20,7 +20,7 @@
 ## 安装
 
 ```sh
-dsh plugin --profile web add dsh-envsel
+dsh plugin --profile web add @beihaizb/dsh-envsel
 ```
 
 重启 `dsh web`，打开一个已有会话，对话头部就会出现 **Env** 下拉框；`/env` 和 `session_env` 立即可用。

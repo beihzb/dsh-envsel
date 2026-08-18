@@ -5,7 +5,7 @@
  * package stays on the harness's process-sandbox seam and its spawns are
  * tree-scoped and observable.
  *
- * @module @deepseek-ai/dsh-envsel/discover
+ * @module @deepseek-ai/@beihaizb/dsh-envsel/discover
  */
 
 import type { Context } from '@deepseek-ai/cordis'

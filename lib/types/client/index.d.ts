@@ -3,7 +3,7 @@
  * per-language (Python / R / CLI tools) dropdowns over the generated `envsel`
  * Remote. The selection is session-owned and shared with the `/env` command,
  * the `session_env` tool, and the DSH_ENV_* shell facts.
- * @module dsh-envsel/client
+ * @module @beihaizb/dsh-envsel/client
  */
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client';
 import { type EnvselLocaleKey } from './locales.ts';

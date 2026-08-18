@@ -3,7 +3,7 @@
  * lives at `$DSH_HOME/envsel-pinned.json` and is shared across sessions; each
  * session still chooses independently from the resulting catalog entries.
  *
- * @module @deepseek-ai/dsh-envsel/pin-cache
+ * @module @deepseek-ai/@beihaizb/dsh-envsel/pin-cache
  */
 
 import type { Context } from '@deepseek-ai/cordis'

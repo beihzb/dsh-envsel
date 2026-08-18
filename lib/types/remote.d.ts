@@ -7,7 +7,7 @@
  * matching generated contribution (`./typert-remote`) in this package's
  * browser bundle.
  *
- * @module dsh-envsel/remote
+ * @module @beihaizb/dsh-envsel/remote
  */
 import type { Context } from '@deepseek-ai/cordis';
 import { TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol';
