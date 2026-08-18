@@ -2,7 +2,7 @@
  * Shared envsel vocabulary: environment entry shapes and language slots.
  * Client-safe — nothing here reaches a Host-only symbol.
  *
- * @module @beihzb/dsh-envsel/types
+ * @module dsh-envsel/types
  */
 import type { SessionId } from '@deepseek-ai/dsh-session/types';
 export type { SessionId } from '@deepseek-ai/dsh-session/types';

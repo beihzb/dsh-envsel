@@ -3,7 +3,7 @@
  * per-language (Python / R / CLI tools) dropdowns over the generated `envsel`
  * Remote. The selection is session-owned and shared with the `/env` command,
  * the `session_env` tool, and the DSH_ENV_* shell facts.
- * @module @beihzb/dsh-envsel/client
+ * @module dsh-envsel/client
  */
 
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).

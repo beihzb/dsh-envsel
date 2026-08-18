@@ -181,10 +181,10 @@ const _deepseek_ai_dsh_envsel_envsel_unpin_result$schema = z.union([z.object({
 })])
 
 export const TYPERT_REMOTE: TypertRemoteContribution = {
-  package: '@beihzb/dsh-envsel',
+  package: 'dsh-envsel',
   descriptors: [
     {
-      id: '@beihzb/dsh-envsel#envsel/get',
+      id: 'dsh-envsel#envsel/get',
       service: 'envsel',
       namespace: 'envsel',
       method: 'get',
@@ -196,20 +196,20 @@ export const TYPERT_REMOTE: TypertRemoteContribution = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@beihzb/dsh-envsel/types#EnvselGetRequest',
+            typeSymbol: 'dsh-envsel/types#EnvselGetRequest',
             schema: _deepseek_ai_dsh_envsel_envsel_get_parameter_0$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@beihzb/dsh-envsel/types#EnvselGetResult',
+        typeSymbol: 'dsh-envsel/types#EnvselGetResult',
         schema: _deepseek_ai_dsh_envsel_envsel_get_result$schema,
       },
       sourceLocation: {"file":"packages/shell/envsel/src/remote.ts","line":59,"column":3},
     },
     {
-      id: '@beihzb/dsh-envsel#envsel/list',
+      id: 'dsh-envsel#envsel/list',
       service: 'envsel',
       namespace: 'envsel',
       method: 'list',
@@ -218,13 +218,13 @@ export const TYPERT_REMOTE: TypertRemoteContribution = {
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@beihzb/dsh-envsel/types#EnvselCatalogValue',
+        typeSymbol: 'dsh-envsel/types#EnvselCatalogValue',
         schema: _deepseek_ai_dsh_envsel_envsel_list_result$schema,
       },
       sourceLocation: {"file":"packages/shell/envsel/src/remote.ts","line":53,"column":3},
     },
     {
-      id: '@beihzb/dsh-envsel#envsel/pin',
+      id: 'dsh-envsel#envsel/pin',
       service: 'envsel',
       namespace: 'envsel',
       method: 'pin',
@@ -236,20 +236,20 @@ export const TYPERT_REMOTE: TypertRemoteContribution = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@beihzb/dsh-envsel/types#EnvselPinRequest',
+            typeSymbol: 'dsh-envsel/types#EnvselPinRequest',
             schema: _deepseek_ai_dsh_envsel_envsel_pin_parameter_0$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@beihzb/dsh-envsel/types#EnvselPinResult',
+        typeSymbol: 'dsh-envsel/types#EnvselPinResult',
         schema: _deepseek_ai_dsh_envsel_envsel_pin_result$schema,
       },
       sourceLocation: {"file":"packages/shell/envsel/src/remote.ts","line":75,"column":3},
     },
     {
-      id: '@beihzb/dsh-envsel#envsel/set',
+      id: 'dsh-envsel#envsel/set',
       service: 'envsel',
       namespace: 'envsel',
       method: 'set',
@@ -261,20 +261,20 @@ export const TYPERT_REMOTE: TypertRemoteContribution = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@beihzb/dsh-envsel/types#EnvselSetRequest',
+            typeSymbol: 'dsh-envsel/types#EnvselSetRequest',
             schema: _deepseek_ai_dsh_envsel_envsel_set_parameter_0$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@beihzb/dsh-envsel/types#EnvselSetResult',
+        typeSymbol: 'dsh-envsel/types#EnvselSetResult',
         schema: _deepseek_ai_dsh_envsel_envsel_set_result$schema,
       },
       sourceLocation: {"file":"packages/shell/envsel/src/remote.ts","line":65,"column":3},
     },
     {
-      id: '@beihzb/dsh-envsel#envsel/unpin',
+      id: 'dsh-envsel#envsel/unpin',
       service: 'envsel',
       namespace: 'envsel',
       method: 'unpin',
@@ -286,14 +286,14 @@ export const TYPERT_REMOTE: TypertRemoteContribution = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@beihzb/dsh-envsel/types#EnvselUnpinRequest',
+            typeSymbol: 'dsh-envsel/types#EnvselUnpinRequest',
             schema: _deepseek_ai_dsh_envsel_envsel_unpin_parameter_0$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@beihzb/dsh-envsel/types#EnvselUnpinResult',
+        typeSymbol: 'dsh-envsel/types#EnvselUnpinResult',
         schema: _deepseek_ai_dsh_envsel_envsel_unpin_result$schema,
       },
       sourceLocation: {"file":"packages/shell/envsel/src/remote.ts","line":85,"column":3},

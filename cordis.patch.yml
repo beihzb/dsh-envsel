@@ -8,4 +8,4 @@
 
 - insert:
     - id: envsel
-      name: '@beihzb/dsh-envsel'
+      name: 'dsh-envsel'

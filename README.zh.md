@@ -20,7 +20,7 @@
 ## 安装
 
 ```sh
-dsh plugin --profile web add @beihzb/dsh-envsel
+dsh plugin --profile web add dsh-envsel
 ```
 
 重启 `dsh web`，打开一个已有会话，对话头部就会出现 **Env** 下拉框；`/env` 和 `session_env` 立即可用。
@@ -74,7 +74,7 @@ dsh plugin --profile web add "file:/绝对/路径/到/本仓库"
 ```yaml
 # 在你的 profile 的 cordis.patch.yml 中，位于 bundle 层之后
 - id: envsel
-  name: '@beihzb/dsh-envsel'
+  name: 'dsh-envsel'
   config:
     wslEnabled: false
     registerTool: true

@@ -8,7 +8,7 @@
  * command, the `session_env` model tool, or the `envsel` Typert Remote that
  * backs the header dropdown.
  *
- * @module @beihzb/dsh-envsel
+ * @module dsh-envsel
  */
 import type { Context } from '@deepseek-ai/cordis';
 import type { EnvEntry, EnvSelection, EnvSlot } from './types.ts';

@@ -20,7 +20,7 @@ This is a **standalone, npm-installable DSH plugin**. It installs with `dsh plug
 ## Installation
 
 ```sh
-dsh plugin --profile web add @beihzb/dsh-envsel
+dsh plugin --profile web add dsh-envsel
 ```
 
 Restart `dsh web`, open an existing session, and the **Env** dropdown appears in the conversation header; `/env` and `session_env` work immediately.
@@ -74,7 +74,7 @@ Example:
 ```yaml
 # in your profile's cordis.patch.yml, after the bundle layer
 - id: envsel
-  name: '@beihzb/dsh-envsel'
+  name: 'dsh-envsel'
   config:
     wslEnabled: false
     registerTool: true

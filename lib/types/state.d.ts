@@ -7,7 +7,7 @@
  * would therefore make the owning session unreadable after a restart, so the
  * plugin owns its own durable state instead.
  *
- * @module @beihzb/dsh-envsel/state
+ * @module dsh-envsel/state
  */
 import type { Context } from '@deepseek-ai/cordis';
 import type { EnvSelection, SessionId } from './types.ts';
