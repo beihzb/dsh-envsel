@@ -1,7 +1,15 @@
 {
   "name": "@beihaizb/dsh-envsel",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Session environment selector for DeepSeek Harness: per-language conda / standalone R / WSL / custom-path slots behind a /env command, the session_env tool, DSH_ENV_* shell facts, and a conversation-header dropdown. Installs with dsh plugin add.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beihzb/dsh-envsel.git"
+  },
+  "bugs": {
+    "url": "https://github.com/beihzb/dsh-envsel/issues"
+  },
+  "homepage": "https://github.com/beihzb/dsh-envsel#readme",
   "keywords": [
     "deepseek-harness",
     "dsh",

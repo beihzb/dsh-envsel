@@ -12,7 +12,7 @@
  */
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { basename, dirname, resolve, sep } from 'node:path'
+import { basename, dirname, relative, resolve, sep } from 'node:path'
 import { transform } from 'lightningcss'
 
 /** Browser platform modules the DSH shell shares into the frozen module table at runtime. */
@@ -60,11 +60,15 @@ const cssModulesPlugin = {
   resolveId(source, importer) {
     if (!source.endsWith('.module.css')) return null
     const abs = importer !== undefined ? sourceAssetPath(source, importer) : source
-    return CSS_VIRTUAL_PREFIX + abs + CSS_VIRTUAL_SUFFIX
+    // Virtual id is PROJECT-RELATIVE so bundler region comments never embed
+    // an absolute machine path (which would leak the build user's home
+    // directory) into the published bundle.
+    return CSS_VIRTUAL_PREFIX + relative(process.cwd(), abs).split(sep).join('/') + CSS_VIRTUAL_SUFFIX
   },
   async load(virtualId) {
     if (!virtualId.startsWith(CSS_VIRTUAL_PREFIX)) return null
-    const fileId = virtualId.slice(CSS_VIRTUAL_PREFIX.length, -CSS_VIRTUAL_SUFFIX.length)
+    const projectRelative = virtualId.slice(CSS_VIRTUAL_PREFIX.length, -CSS_VIRTUAL_SUFFIX.length)
+    const fileId = resolve(process.cwd(), projectRelative)
     this.addWatchFile(fileId)
     const source = await readFile(fileId)
     const { code, exports: cssExports } = transform({
