@@ -37,8 +37,8 @@ dsh plugin --profile web add "file:/绝对/路径/到/本仓库"
 
 ```
 /env                        查看当前选择
-/env python=scRNAv2         设置 Python 槽位（conda 名 / 独立R名 / wsl:发行版:名 / custom:名）
-/env r=R-4.5.1              设置 R 槽位
+/env python=mycondaenv    设置 Python 槽位（conda 名 / 独立R名 / wsl:发行版:名 / custom:名）
+/env r=R-latest            设置 R 槽位
 /env cli=base               设置 CLI 槽位（PATH 前缀）
 /env python=                清空某个槽位
 /env list [过滤词]           列出所有可发现的环境

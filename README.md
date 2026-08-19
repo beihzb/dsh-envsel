@@ -1,5 +1,12 @@
 # dsh-envsel
 
+[![npm version](https://img.shields.io/npm/v/@beihaizb/dsh-envsel.svg)](https://www.npmjs.com/package/@beihaizb/dsh-envsel)
+[![npm downloads](https://img.shields.io/npm/dm/@beihaizb/dsh-envsel.svg)](https://www.npmjs.com/package/@beihaizb/dsh-envsel)
+[![license](https://img.shields.io/npm/l/@beihaizb/dsh-envsel.svg)](https://github.com/beihzb/dsh-envsel/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/beihzb/dsh-envsel.svg?style=social)](https://github.com/beihzb/dsh-envsel)
+
+[English](README.md) | [中文](README.zh.md)
+
 Session environment selector for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH). Per-language slots — Python, R, CLI tools — each hold one first-priority environment drawn from **conda**, **standalone R** installs, **WSL** distributions, or **user-pinned custom paths**. Selections are per-session, persisted across restarts, and take effect for the model from the very next turn.
 
 This is a **standalone, npm-installable DSH plugin**. It installs with `dsh plugin add` — no source patching, no monorepo checkout.
@@ -37,8 +44,8 @@ dsh plugin --profile web add "file:/absolute/path/to/this/repo"
 
 ```
 /env                        show the current selection
-/env python=scRNAv2         set the Python slot (conda name / R name / wsl:distro:name / custom:name)
-/env r=R-4.5.1              set the R slot
+/env python=mycondaenv    set the Python slot (conda name / R name / wsl:distro:name / custom:name)
+/env r=R-latest            set the R slot
 /env cli=base               set the CLI slot (PATH prefix)
 /env python=                clear one slot
 /env list [filter]          list all discoverable environments
