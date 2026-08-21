@@ -1,5 +1,7 @@
 # dsh-envsel
 
+[English](README.md) | 中文
+
 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）的会话环境选择器。按语言槽位 —— Python、R、CLI 工具 —— 每个槽位各持有一个来自 **conda**、**独立 R** 安装、**WSL** 发行版或**手动固定路径**的首选环境。选择按会话隔离、重启后保留，并从下一轮起对模型生效。
 
 这是一个**独立的、可通过 npm 安装的 DSH 插件**。用 `dsh plugin add` 安装即可 —— 无需打源码补丁，也无需 monorepo 检出。
@@ -11,6 +13,7 @@
 - **`DSH_ENV_*` shell 事实** —— 每次 shell 调用都会看到会话所选环境的 `DSH_ENV_PYTHON`、`DSH_ENV_RSCRIPT`、`DSH_ENV_CLI_PREFIX`。
 - **头部下拉框** —— 会话头部提供按语言（Python / R / CLI 工具）选择的面板，并带「添加路径」表单，可固定任意解释器或安装目录。
 - **跨平台发现** —— conda 环境、独立 R（Windows `Program Files`、macOS 框架 + Homebrew、Linux `/opt/R`）、Windows 上的 WSL 发行版，以及手动固定的路径。WSL 扫描在非 Windows 主机上自动跳过。
+- **中英双语 UI** —— 产品文案（`/env` 命令、头部下拉框、发现警告）跟随 DSH 界面语言：默认英文，当 DSH 语言偏好设为中文时显示中文。
 
 ## 环境要求
 

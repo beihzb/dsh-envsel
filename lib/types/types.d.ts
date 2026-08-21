@@ -10,7 +10,7 @@ export type { SessionId } from '@deepseek-ai/dsh-session/types';
 export type EnvSlot = 'python' | 'r' | 'cli';
 /** Every supported slot, in canonical display order. */
 export declare const ENV_SLOTS: readonly EnvSlot[];
-/** Human-readable slot labels (product copy is Chinese). */
+/** Human-readable slot labels for model-facing or locale-neutral text. */
 export declare const ENV_SLOT_LABELS: Readonly<Record<EnvSlot, string>>;
 /** Provenance of a discovered environment entry. */
 export type EnvKind = 'conda' | 'r' | 'wsl' | 'custom';

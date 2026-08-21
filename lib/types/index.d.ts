@@ -72,7 +72,7 @@ type EnvLineAction = {
     text: string;
 };
 /** Parse the raw input of a `/env` invocation into an action. */
-export declare function parseEnvLine(rawInput: string): EnvLineAction;
+export declare function parseEnvLine(rawInput: string, locale?: 'en' | 'zh'): EnvLineAction;
 /** Whether an entry can serve a slot (its language must be present). */
 export declare function slotCompatible(slot: EnvSlot, entry: EnvEntry): boolean;
 /** Human-readable one-line summary of an entry. */
@@ -80,7 +80,7 @@ export declare function describeEntry(entry: EnvEntry): string;
 /** Render the runtime-context block for one selection. */
 export declare function selectionContext(selection: EnvSelection): string;
 /** Usage text for the /env command. */
-export declare function envHelpText(): string;
+export declare function envHelpText(locale?: 'en' | 'zh'): string;
 /**
  * PATH-prefix guidance for the CLI slot, matching the host shell family.
  * @param entry - selected CLI environment.

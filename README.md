@@ -18,6 +18,7 @@ This is a **standalone, npm-installable DSH plugin**. It installs with `dsh plug
 - **`DSH_ENV_*` shell facts** — every shell call sees `DSH_ENV_PYTHON`, `DSH_ENV_RSCRIPT`, `DSH_ENV_CLI_PREFIX` for the session's selection.
 - **Header dropdown** — a per-language selector in the conversation header (Python / R / CLI tools), with an "Add path" form to pin any interpreter or install directory.
 - **Cross-platform discovery** — conda environments, standalone R (Windows `Program Files`, macOS framework + Homebrew, Linux `/opt/R`), WSL distributions on Windows, and manually pinned paths. WSL scanning is skipped automatically on non-Windows hosts.
+- **Bilingual UI** — product copy (the `/env` command, the header dropdown, and discovery warnings) follows the DSH interface language: English by default, Chinese when the DSH language preference is set to 中文.
 
 ## Requirements
 

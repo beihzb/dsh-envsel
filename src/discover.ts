@@ -12,6 +12,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-subprocess'
 import type {} from '@deepseek-ai/dsh-fs'
 import type { EnvEntry } from './types.ts'
+import { hostCopy, resolveHostLocale } from './copy.ts'
 
 /** Timer-service surface used by the probe watchdog (inject: ['timer']). */
 type TimerService = { timeout(callback: () => void, delay: number): () => void }
@@ -182,6 +183,8 @@ async function condaEntry(ctx: Context, index: number, prefix: string): Promise<
 
 /** Discover conda environments via `conda env list --json`. */
 export async function discoverConda(ctx: Context, config: DiscoverConfig): Promise<{ entries: EnvEntry[]; error?: string }> {
+  const locale = resolveHostLocale(ctx)
+  const copy = hostCopy(locale)
   let condaExe: string | null = null
   try {
     condaExe = await ctx.subprocess.resolveExecutable(config.condaCommand)
@@ -199,20 +202,20 @@ export async function discoverConda(ctx: Context, config: DiscoverConfig): Promi
   try {
     probe = await runProbe(ctx, argv, config.probeTimeoutMs)
   } catch (error) {
-    return { entries: [], error: `conda 环境列举失败（需要 ${config.condaCommand} 在 PATH 上）: ${String(error)}` }
+    return { entries: [], error: copy.condaListFailed(config.condaCommand, String(error)) }
   }
   if (probe.exitCode !== 0) {
     const detail = probe.stderr.trim().slice(0, 300)
-    return { entries: [], error: `conda env list 退出码 ${String(probe.exitCode)}${detail.length > 0 ? ` - ${detail}` : ''}` }
+    return { entries: [], error: copy.condaExit(String(probe.exitCode), detail) }
   }
   let parsed: unknown
   try {
     parsed = JSON.parse(probe.stdout)
   } catch (error) {
-    return { entries: [], error: `conda env list 输出无法解析: ${String(error)}` }
+    return { entries: [], error: copy.condaParse(String(error)) }
   }
   if (parsed === null || typeof parsed !== 'object' || !Array.isArray((parsed as { envs?: unknown }).envs)) {
-    return { entries: [], error: 'conda env list 输出结构异常（缺少 envs 数组）' }
+    return { entries: [], error: copy.condaShape }
   }
   const prefixes = (parsed as { envs: unknown[] }).envs.filter((item): item is string => typeof item === 'string' && item.length > 0)
   const entries = await Promise.all(prefixes.map((prefix, index) => condaEntry(ctx, index, prefix)))
@@ -344,15 +347,16 @@ export async function discoverStandaloneR(ctx: Context, config: DiscoverConfig):
  */
 export async function wslDistros(ctx: Context, config: DiscoverConfig): Promise<{ distros: string[]; error?: string }> {
   if (!config.wslEnabled || !isWindowsHost()) return { distros: [] }
+  const copy = hostCopy(resolveHostLocale(ctx))
   let probe: { exitCode: number | null; stdout: string; stderr: string }
   try {
     probe = await runProbe(ctx, ['wsl.exe', '--list', '--quiet'], config.probeTimeoutMs)
   } catch (error) {
-    return { distros: [], error: `WSL 不可用: ${String(error)}` }
+    return { distros: [], error: copy.wslUnavailable(String(error)) }
   }
   if (probe.exitCode !== 0) {
     const detail = probe.stderr.trim().slice(0, 300)
-    return { distros: [], error: `wsl --list 退出码 ${String(probe.exitCode)}${detail.length > 0 ? ` - ${detail}` : ''}` }
+    return { distros: [], error: copy.wslListExit(String(probe.exitCode), detail) }
   }
   // wsl.exe emits UTF-16LE (including a BOM) on Windows; treat the bytes as
   // such when the output is not valid UTF-8.
@@ -380,16 +384,17 @@ export async function discoverWslDistro(
   config: DiscoverConfig,
   distro: string,
 ): Promise<{ entries: EnvEntry[]; error?: string }> {
+  const copy = hostCopy(resolveHostLocale(ctx))
   // One shell line: report conda env prefixes, or a sentinel when conda is absent.
   const script = 'command -v conda >/dev/null 2>&1 && conda env list --json || printf "__NO_CONDA__"'
   let probe: { exitCode: number | null; stdout: string; stderr: string }
   try {
     probe = await runProbe(ctx, ['wsl.exe', '-d', distro, '--', 'sh', '-lc', script], config.probeTimeoutMs)
   } catch (error) {
-    return { entries: [], error: `${distro}: WSL 探测失败: ${String(error)}` }
+    return { entries: [], error: copy.wslProbeFailed(distro, String(error)) }
   }
   if (probe.exitCode !== 0) {
-    return { entries: [], error: `${distro}: 探测退出码 ${String(probe.exitCode)}: ${probe.stderr.trim().slice(0, 300)}` }
+    return { entries: [], error: copy.wslProbeExit(distro, String(probe.exitCode), probe.stderr.trim().slice(0, 300)) }
   }
   const stdout = probe.stdout.trim()
   if (stdout === '__NO_CONDA__') {
@@ -401,10 +406,10 @@ export async function discoverWslDistro(
   try {
     parsed = JSON.parse(stdout)
   } catch (error) {
-    return { entries: [], error: `${distro}: conda env list 输出无法解析: ${String(error)}` }
+    return { entries: [], error: copy.wslParse(distro, String(error)) }
   }
   if (parsed === null || typeof parsed !== 'object' || !Array.isArray((parsed as { envs?: unknown }).envs)) {
-    return { entries: [], error: `${distro}: 输出结构异常` }
+    return { entries: [], error: copy.wslShape(distro) }
   }
   const prefixes = (parsed as { envs: unknown[] }).envs.filter((item): item is string => typeof item === 'string' && item.length > 0)
   const entries: EnvEntry[] = []

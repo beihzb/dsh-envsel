@@ -14,11 +14,11 @@ export type EnvSlot = 'python' | 'r' | 'cli'
 /** Every supported slot, in canonical display order. */
 export const ENV_SLOTS: readonly EnvSlot[] = ['python', 'r', 'cli']
 
-/** Human-readable slot labels (product copy is Chinese). */
+/** Human-readable slot labels for model-facing or locale-neutral text. */
 export const ENV_SLOT_LABELS: Readonly<Record<EnvSlot, string>> = {
   python: 'Python',
   r: 'R',
-  cli: 'CLI 工具',
+  cli: 'CLI tools',
 }
 
 /** Provenance of a discovered environment entry. */

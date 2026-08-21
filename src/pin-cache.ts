@@ -10,6 +10,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-fs'
 import { dshHomePath } from '@deepseek-ai/dsh-home-paths'
 import { probeCustomPath } from './discover.ts'
+import { hostCopy, resolveHostLocale } from './copy.ts'
 import { writeHomeFile } from './home-io.ts'
 import type { EnvEntry } from './types.ts'
 
@@ -107,13 +108,14 @@ export interface ResolvedPins {
  */
 export async function resolvePinnedEntries(ctx: Context): Promise<ResolvedPins> {
   const pins = await readPinnedPaths(ctx)
+  const copy = hostCopy(resolveHostLocale(ctx))
   const entries: EnvEntry[] = []
   const warnings: string[] = []
   const seen = new Set<string>()
   for (const pin of pins) {
     const probed = await probeCustomPath(ctx, pin.path)
     if (!probed.ok) {
-      warnings.push(`手动路径不可用（${probed.code}）: ${pin.path}`)
+      warnings.push(copy.pinUnavailable(probed.code, pin.path))
       continue
     }
     const key = `${probed.entry.kind}|${probed.entry.name}|${probed.entry.prefix}`.toLowerCase()
