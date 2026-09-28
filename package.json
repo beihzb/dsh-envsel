@@ -1,6 +1,6 @@
 {
   "name": "@beihaizb/dsh-envsel",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Session environment selector for DeepSeek Harness: per-language conda / standalone R / WSL / custom-path slots behind a /env command, the session_env tool, DSH_ENV_* shell facts, and a conversation-header dropdown. Installs with dsh plugin add.",
   "repository": {
     "type": "git",
@@ -87,7 +87,7 @@
     "@deepseek-ai/dsh-shell-env": "^0.1.0-rc.7",
     "@deepseek-ai/dsh-subprocess": "^0.1.0-rc.7",
     "@deepseek-ai/dsh-tools": "^0.1.0-rc.7",
-    "@deepseek-ai/dsh-typert-protocol": "^0.1.0-rc.7",
+    "@deepseek-ai/dsh-typert-protocol": "^0.1.7-rc.1",
     "react": "^18.2.0"
   },
   "devDependencies": {
@@ -107,7 +107,7 @@
     "@deepseek-ai/dsh-shell-env": "^0.1.0-rc.7",
     "@deepseek-ai/dsh-subprocess": "^0.1.0-rc.7",
     "@deepseek-ai/dsh-tools": "^0.1.0-rc.7",
-    "@deepseek-ai/dsh-typert-protocol": "^0.1.0-rc.7",
+    "@deepseek-ai/dsh-typert-protocol": "^0.1.7-rc.1",
     "@types/node": "^22.0.0",
     "@types/react": "~18.3.1",
     "lightningcss": "^1.0.0",

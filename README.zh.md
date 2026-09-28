@@ -17,8 +17,23 @@
 
 ## 环境要求
 
-- DeepSeek Harness **0.1.0-rc.7 或兼容的 0.1.0-rc.x**（web profile）。插件的 peer 依赖是该版本自带的官方 `@deepseek-ai/dsh-*@0.1.0-rc.7` 包。
+- DeepSeek Harness **0.1.7-rc.1 或更新版本**（web profile）；已在 **0.1.7-rc.2** 上验证。锁定这一要求的是 Typert 协议 peer `@deepseek-ai/dsh-typert-protocol@^0.1.7-rc.1`；其余 `@deepseek-ai/dsh-*` peer 仍为 `^0.1.0-rc.7`，因为那些接口没有变化。
 - PATH 上有 `pnpm`（`dsh plugin` 会用到）。
+
+## DSH 版本兼容性
+
+| 插件 | DeepSeek Harness | 原因 |
+| --- | --- | --- |
+| **0.1.5** | **0.1.7-rc.1 或更新版本** | 发射带 `create()` 工厂的 strict Typert codec，该契约由 0.1.7-rc.1 引入。 |
+| 0.1.4 及更早 | 0.1.0-rc.7 至 0.1.5-rc.x | 发射这些 loader 所校验的即刻构造 `schema` 实例。 |
+
+DSH 在 **0.1.7-rc.1** 改了 strict codec 契约：`dsh-typert-loader` 与 `dsh-typert-registry`（宿主端和浏览器端）要求 `typeof codec.create === 'function'`，且不再校验即刻构造的 `schema` 字段。因此只带 `schema` 的 codec 在 0.1.7-rc.1 及更新版本上加载失败，只带 `create()` 的 codec 在 0.1.0-rc.x 上加载失败，两代无法共用同一份产物。本版本只针对新契约；在旧版 DSH 上请改装旧版插件：
+
+```sh
+dsh plugin --profile web add @beihaizb/dsh-envsel@0.1.4
+```
+
+本包中每个生成的 codec 都经 `strictCodec()`（`src/strict-codec.ts`）发射，契约只有一个改动点。
 
 ## 安装
 
@@ -77,7 +92,7 @@ dsh plugin --profile web add "file:/绝对/路径/到/本仓库"
 ```yaml
 # 在你的 profile 的 cordis.patch.yml 中，位于 bundle 层之后
 - id: envsel
-  name: 'dsh-envsel'
+  name: '@beihaizb/dsh-envsel'
   config:
     wslEnabled: false
     registerTool: true
@@ -100,7 +115,7 @@ pnpm run test     # node:test 单元测试
 ## 已知限制
 
 - **没有按会话的 runtime-context 文本。** 官方 `AssembleContext` 没有 agent 绑定，因此选择不会渲染进模型的系统提示。模型仍会通过每次 shell 调用的 `DSH_ENV_*` 看到选择，并可用 `/env` / `session_env` 查询。
-- **peer 绑定 0.1.0-rc.x。** 插件声明 `@deepseek-ai/dsh-*@^0.1.0-rc.7` peer。未来改变这些 API 的 DSH 大/小版本需要插件跟版。
+- **peer 绑定 0.1.7-rc.1 及更新版本。** 插件声明 `@deepseek-ai/dsh-*@^0.1.7-rc.1` peer，并已在 `0.1.7-rc.2` 上验证。在 DSH 0.1.0-rc.7 至 0.1.5-rc.x 上请改装 `@beihaizb/dsh-envsel@0.1.4`；未来改变这些 API、或再次改动 Typert 产物契约的 DSH 版本，都需要插件跟版。
 - **选择不属于会话日志。** 它们会在重启后保留在 `envsel-state.json` 中，但不会从（或由）会话日志重放。
 
 ## License

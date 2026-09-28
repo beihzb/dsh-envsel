@@ -22,8 +22,23 @@ This is a **standalone, npm-installable DSH plugin**. It installs with `dsh plug
 
 ## Requirements
 
-- DeepSeek Harness **0.1.0-rc.7 or a compatible 0.1.0-rc.x** (the web profile). The plugin's peers are the official `@deepseek-ai/dsh-*@0.1.0-rc.7` packages that ship with that release.
+- DeepSeek Harness **0.1.7-rc.1 or newer** (the web profile); verified on **0.1.7-rc.2**. The peer that pins this requirement is `@deepseek-ai/dsh-typert-protocol@^0.1.7-rc.1`; the other `@deepseek-ai/dsh-*` peers stay at `^0.1.0-rc.7` because those seams did not change.
 - `pnpm` on PATH (used by `dsh plugin`).
+
+## DSH version compatibility
+
+| Plugin | DeepSeek Harness | Why |
+| --- | --- | --- |
+| **0.1.5** | **0.1.7-rc.1 or newer** | Emits strict Typert codecs with the `create()` factory that 0.1.7-rc.1 introduced. |
+| 0.1.4 and earlier | 0.1.0-rc.7 through 0.1.5-rc.x | Emits the eager `schema` instance those loaders validate. |
+
+DSH changed the strict-codec contract in **0.1.7-rc.1**: `dsh-typert-loader` and `dsh-typert-registry` (host and browser side) require `typeof codec.create === 'function'` and no longer validate the eager `schema` field. A codec carrying only `schema` therefore fails to load on 0.1.7-rc.1 and newer, and a codec carrying only `create()` fails on 0.1.0-rc.x, so the two generations cannot share one artifact. This release targets the new contract only; on an older DSH, install the older plugin instead:
+
+```sh
+dsh plugin --profile web add @beihaizb/dsh-envsel@0.1.4
+```
+
+Every generated codec here is emitted through `strictCodec()` (`src/strict-codec.ts`), which supplies that factory, so the wire contract has one place to change.
 
 ## Installation
 
@@ -82,7 +97,7 @@ Example:
 ```yaml
 # in your profile's cordis.patch.yml, after the bundle layer
 - id: envsel
-  name: 'dsh-envsel'
+  name: '@beihaizb/dsh-envsel'
   config:
     wslEnabled: false
     registerTool: true
@@ -105,7 +120,7 @@ The build produces two artifacts: `lib/index.js` (the host plugin, loaded from t
 ## Known limitations
 
 - **No per-session runtime-context text.** The official `AssembleContext` has no agent binding, so the selection is not rendered into the model's system prompt. The model still sees the selection through `DSH_ENV_*` on every shell call and can query it with `/env` / `session_env`.
-- **Peer-bound to 0.1.0-rc.x.** The plugin declares `@deepseek-ai/dsh-*@^0.1.0-rc.7` peers. A future DSH major/minor that changes these APIs needs a plugin update.
+- **Peer-bound to 0.1.7-rc.1 and newer.** The plugin declares `@deepseek-ai/dsh-*@^0.1.7-rc.1` peers and is verified up to `0.1.7-rc.2`. On DSH 0.1.0-rc.7 through 0.1.5-rc.x install `@beihaizb/dsh-envsel@0.1.4` instead; a future DSH release that changes these APIs — or the Typert artifact contract again — needs a matching plugin update.
 - **Selections are not part of the session log.** They survive restarts in `envsel-state.json` but are not replayed from (or carried by) session logs.
 
 ## License
