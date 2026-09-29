@@ -5,7 +5,7 @@
  * the `session_env` tool, and the DSH_ENV_* shell facts.
  * @module @beihaizb/dsh-envsel/client
  */
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client';
+import type { Context as ClientContext } from '@deepseek-ai/cordis';
 import { type EnvselLocaleKey } from './locales.ts';
 declare module '@deepseek-ai/dsh-client-ui-slots' {
     interface LocaleNamespaceMap {

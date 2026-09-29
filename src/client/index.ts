@@ -8,8 +8,13 @@
 
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
 import type {} from '@deepseek-ai/dsh-client-locale/client'
-// Type-only: pulls the client runtime's ClientContext (the client-side root).
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+// Type-only: pulls the slot registry's Context merge (ctx.slots).
+import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
+// Type-only: pulls the Remote face's Context merge (ctx.remote).
+import type {} from '@deepseek-ai/dsh-api-remotes/client'
+// Type-only: the client-side root context is cordis' own Context in DSH 0.1.7
+// (the former @deepseek-ai/dsh-client-runtime/client root no longer ships).
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 // The generated Host-for-Client Remote contribution this package owns (the
 // official api-remotes assembly does not know a downstream plugin, so this
 // package mounts its own `envsel` namespace).

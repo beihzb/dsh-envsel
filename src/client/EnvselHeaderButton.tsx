@@ -13,12 +13,14 @@
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
-import { IconCheckOutline14, IconChevronDownOutline14, IconCloseFill14 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconCheckOutlineRegular, IconChevronDownOutlineRegular, IconCloseFillRegular } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { EnvselCatalogValue, EnvselGetValue } from '../types.ts'
 import type { EnvEntry, EnvSelection, EnvSlot } from '../types.ts'
 // Type-only: pulls the ui-conversation SlotMap merge (the header utilities entry).
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+// Type-only: pulls the session standard kit merge (SessionStandardProps.sessionId).
+import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import { NS, type EnvselLocaleKey } from './locales.ts'
 import css from './EnvselHeaderButton.module.css'
 
@@ -232,7 +234,7 @@ export function EnvselHeaderButton({
         <span className={loadError === null ? css.summary : css.summaryError} title={loadError ?? summary}>
           {loadError ?? summary}
         </span>
-        <IconChevronDownOutline14 className={open ? css.chevronOpen : undefined} aria-hidden="true" />
+        <IconChevronDownOutlineRegular className={open ? css.chevronOpen : undefined} aria-hidden="true" />
       </button>
       {open ? (
         <div className={css.panel} role="group" aria-label={t('panelAria')}>
@@ -283,7 +285,7 @@ export function EnvselHeaderButton({
                       disabled={busySlot === slot}
                       onClick={() => choose(slot, '')}
                     >
-                      <IconCloseFill14 aria-hidden="true" />
+                      <IconCloseFillRegular aria-hidden="true" />
                       <span>{t('clear')} {current.name}</span>
                     </button>
                   ) : null}
@@ -307,7 +309,7 @@ export function EnvselHeaderButton({
                               disabled={busySlot === slot}
                               onClick={() => choose(slot, address)}
                             >
-                              <IconCheckOutline14 className={selected ? css.check : css.checkHidden} aria-hidden="true" />
+                              <IconCheckOutlineRegular className={selected ? css.check : css.checkHidden} aria-hidden="true" />
                               <span className={css.entryName}>{entry.name}</span>
                               <span className={css.entryKind}>{kindLabel(entry, t)}</span>
                             </button>

@@ -29,7 +29,8 @@ This is a **standalone, npm-installable DSH plugin**. It installs with `dsh plug
 
 | Plugin | DeepSeek Harness | Why |
 | --- | --- | --- |
-| **0.1.5** | **0.1.7-rc.1 or newer** | Emits strict Typert codecs with the `create()` factory that 0.1.7-rc.1 introduced. |
+| **0.1.6** | **0.1.7-rc.1 or newer** | Fixes the header dropdown on 0.1.7: that release renamed the UI icon set (`IconCheckOutline14` became `IconCheckOutlineRegular`), so 0.1.5's button rendered an undefined element and the slot entry crashed. |
+| 0.1.5 | 0.1.7-rc.1 or newer | Emits strict Typert codecs with the `create()` factory that 0.1.7-rc.1 introduced. Host-side surfaces (`/env`, `session_env`, `DSH_ENV_*`) work; the header dropdown does not. |
 | 0.1.4 and earlier | 0.1.0-rc.7 through 0.1.5-rc.x | Emits the eager `schema` instance those loaders validate. |
 
 DSH changed the strict-codec contract in **0.1.7-rc.1**: `dsh-typert-loader` and `dsh-typert-registry` (host and browser side) require `typeof codec.create === 'function'` and no longer validate the eager `schema` field. A codec carrying only `schema` therefore fails to load on 0.1.7-rc.1 and newer, and a codec carrying only `create()` fails on 0.1.0-rc.x, so the two generations cannot share one artifact. This release targets the new contract only; on an older DSH, install the older plugin instead:

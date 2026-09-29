@@ -24,7 +24,8 @@
 
 | 插件 | DeepSeek Harness | 原因 |
 | --- | --- | --- |
-| **0.1.5** | **0.1.7-rc.1 或更新版本** | 发射带 `create()` 工厂的 strict Typert codec，该契约由 0.1.7-rc.1 引入。 |
+| **0.1.6** | **0.1.7-rc.1 或更新版本** | 修复 0.1.7 上的头部下拉框：该版本改了 UI 图标命名（`IconCheckOutline14` 改为 `IconCheckOutlineRegular`），0.1.5 的按钮因此渲染出 undefined 元素、该 slot 条目崩溃。 |
+| 0.1.5 | 0.1.7-rc.1 或更新版本 | 发射带 `create()` 工厂的 strict Typert codec，该契约由 0.1.7-rc.1 引入。宿主侧（`/env`、`session_env`、`DSH_ENV_*`）可用；头部下拉框不可用。 |
 | 0.1.4 及更早 | 0.1.0-rc.7 至 0.1.5-rc.x | 发射这些 loader 所校验的即刻构造 `schema` 实例。 |
 
 DSH 在 **0.1.7-rc.1** 改了 strict codec 契约：`dsh-typert-loader` 与 `dsh-typert-registry`（宿主端和浏览器端）要求 `typeof codec.create === 'function'`，且不再校验即刻构造的 `schema` 字段。因此只带 `schema` 的 codec 在 0.1.7-rc.1 及更新版本上加载失败，只带 `create()` 的 codec 在 0.1.0-rc.x 上加载失败，两代无法共用同一份产物。本版本只针对新契约；在旧版 DSH 上请改装旧版插件：
