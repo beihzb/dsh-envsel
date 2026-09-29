@@ -70,7 +70,12 @@
   overflow: auto;
   border: 1px solid var(--dsw-alias-border-l2);
   border-radius: 12px;
-  background: var(--dsw-specific-menu);
+  /* Opaque surface. The theme's menu fill (--dsw-specific-menu /
+     --dsw-menu-surface-fill) carries alpha - #43454a73 dark, #f8f9fa94 light -
+     so page content bleeds through the dropdown. The elevated-fill token is the
+     same surface colour at full opacity in both themes; layer-3 is the opaque
+     fallback if a theme does not define it. */
+  background: var(--dsw-alias-button-elevated-fill, var(--dsw-alias-bg-layer-3));
   --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
   --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
   box-shadow: var(--dsw-shadow-lv3);
