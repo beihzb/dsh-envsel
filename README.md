@@ -31,12 +31,12 @@ This is a **standalone, npm-installable DSH plugin**. It installs with `dsh plug
 | --- | --- | --- |
 | **0.1.6** | **0.1.7-rc.1 or newer** | Fixes the header dropdown on 0.1.7: that release renamed the UI icon set (`IconCheckOutline14` became `IconCheckOutlineRegular`), so 0.1.5's button rendered an undefined element and the slot entry crashed. |
 | 0.1.5 | 0.1.7-rc.1 or newer | Emits strict Typert codecs with the `create()` factory that 0.1.7-rc.1 introduced. Host-side surfaces (`/env`, `session_env`, `DSH_ENV_*`) work; the header dropdown does not. |
-| 0.1.4 and earlier | 0.1.0-rc.7 through 0.1.5-rc.x | Emits the eager `schema` instance those loaders validate. |
+| 0.1.3 and earlier (published) | 0.1.0-rc.7 through 0.1.5-rc.x | Emits the eager `schema` instance those loaders validate. |
 
-DSH changed the strict-codec contract in **0.1.7-rc.1**: `dsh-typert-loader` and `dsh-typert-registry` (host and browser side) require `typeof codec.create === 'function'` and no longer validate the eager `schema` field. A codec carrying only `schema` therefore fails to load on 0.1.7-rc.1 and newer, and a codec carrying only `create()` fails on 0.1.0-rc.x, so the two generations cannot share one artifact. This release targets the new contract only; on an older DSH, install the older plugin instead:
+DSH changed the strict-codec contract in **0.1.7-rc.1**: `dsh-typert-loader` and `dsh-typert-registry` (host and browser side) require `typeof codec.create === 'function'` and no longer validate the eager `schema` field. A codec carrying only `schema` therefore fails to load on 0.1.7-rc.1 and newer, and a codec carrying only `create()` fails on 0.1.0-rc.x, so the two generations cannot share one artifact. This release targets the new contract only; on an older DSH, install the last release published for that line instead (the `v0.1.4` tag was never published to npm):
 
 ```sh
-dsh plugin --profile web add @beihaizb/dsh-envsel@0.1.4
+dsh plugin --profile web add @beihaizb/dsh-envsel@0.1.3
 ```
 
 Every generated codec here is emitted through `strictCodec()` (`src/strict-codec.ts`), which supplies that factory, so the wire contract has one place to change.
@@ -121,7 +121,7 @@ The build produces two artifacts: `lib/index.js` (the host plugin, loaded from t
 ## Known limitations
 
 - **No per-session runtime-context text.** The official `AssembleContext` has no agent binding, so the selection is not rendered into the model's system prompt. The model still sees the selection through `DSH_ENV_*` on every shell call and can query it with `/env` / `session_env`.
-- **Peer-bound to 0.1.7-rc.1 and newer.** The plugin declares `@deepseek-ai/dsh-*@^0.1.7-rc.1` peers and is verified up to `0.1.7-rc.2`. On DSH 0.1.0-rc.7 through 0.1.5-rc.x install `@beihaizb/dsh-envsel@0.1.4` instead; a future DSH release that changes these APIs — or the Typert artifact contract again — needs a matching plugin update.
+- **Peer-bound to 0.1.7-rc.1 and newer.** The plugin declares `@deepseek-ai/dsh-*@^0.1.7-rc.1` peers and is verified up to `0.1.7-rc.2`. On DSH 0.1.0-rc.7 through 0.1.5-rc.x install `@beihaizb/dsh-envsel@0.1.3` (the last release published for that line) instead; a future DSH release that changes these APIs — or the Typert artifact contract again — needs a matching plugin update.
 - **Selections are not part of the session log.** They survive restarts in `envsel-state.json` but are not replayed from (or carried by) session logs.
 
 ## License

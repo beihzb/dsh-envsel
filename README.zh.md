@@ -26,12 +26,12 @@
 | --- | --- | --- |
 | **0.1.6** | **0.1.7-rc.1 或更新版本** | 修复 0.1.7 上的头部下拉框：该版本改了 UI 图标命名（`IconCheckOutline14` 改为 `IconCheckOutlineRegular`），0.1.5 的按钮因此渲染出 undefined 元素、该 slot 条目崩溃。 |
 | 0.1.5 | 0.1.7-rc.1 或更新版本 | 发射带 `create()` 工厂的 strict Typert codec，该契约由 0.1.7-rc.1 引入。宿主侧（`/env`、`session_env`、`DSH_ENV_*`）可用；头部下拉框不可用。 |
-| 0.1.4 及更早 | 0.1.0-rc.7 至 0.1.5-rc.x | 发射这些 loader 所校验的即刻构造 `schema` 实例。 |
+| 0.1.3 及更早（已发布） | 0.1.0-rc.7 至 0.1.5-rc.x | 发射这些 loader 所校验的即刻构造 `schema` 实例。 |
 
-DSH 在 **0.1.7-rc.1** 改了 strict codec 契约：`dsh-typert-loader` 与 `dsh-typert-registry`（宿主端和浏览器端）要求 `typeof codec.create === 'function'`，且不再校验即刻构造的 `schema` 字段。因此只带 `schema` 的 codec 在 0.1.7-rc.1 及更新版本上加载失败，只带 `create()` 的 codec 在 0.1.0-rc.x 上加载失败，两代无法共用同一份产物。本版本只针对新契约；在旧版 DSH 上请改装旧版插件：
+DSH 在 **0.1.7-rc.1** 改了 strict codec 契约：`dsh-typert-loader` 与 `dsh-typert-registry`（宿主端和浏览器端）要求 `typeof codec.create === 'function'`，且不再校验即刻构造的 `schema` 字段。因此只带 `schema` 的 codec 在 0.1.7-rc.1 及更新版本上加载失败，只带 `create()` 的 codec 在 0.1.0-rc.x 上加载失败，两代无法共用同一份产物。本版本只针对新契约；在旧版 DSH 上请改装该线最后一个已发布版本（`v0.1.4` 打了标签但从未发布到 npm）：
 
 ```sh
-dsh plugin --profile web add @beihaizb/dsh-envsel@0.1.4
+dsh plugin --profile web add @beihaizb/dsh-envsel@0.1.3
 ```
 
 本包中每个生成的 codec 都经 `strictCodec()`（`src/strict-codec.ts`）发射，契约只有一个改动点。
@@ -116,7 +116,7 @@ pnpm run test     # node:test 单元测试
 ## 已知限制
 
 - **没有按会话的 runtime-context 文本。** 官方 `AssembleContext` 没有 agent 绑定，因此选择不会渲染进模型的系统提示。模型仍会通过每次 shell 调用的 `DSH_ENV_*` 看到选择，并可用 `/env` / `session_env` 查询。
-- **peer 绑定 0.1.7-rc.1 及更新版本。** 插件声明 `@deepseek-ai/dsh-*@^0.1.7-rc.1` peer，并已在 `0.1.7-rc.2` 上验证。在 DSH 0.1.0-rc.7 至 0.1.5-rc.x 上请改装 `@beihaizb/dsh-envsel@0.1.4`；未来改变这些 API、或再次改动 Typert 产物契约的 DSH 版本，都需要插件跟版。
+- **peer 绑定 0.1.7-rc.1 及更新版本。** 插件声明 `@deepseek-ai/dsh-*@^0.1.7-rc.1` peer，并已在 `0.1.7-rc.2` 上验证。在 DSH 0.1.0-rc.7 至 0.1.5-rc.x 上请改装 `@beihaizb/dsh-envsel@0.1.3`（该线最后一个已发布版本）；未来改变这些 API、或再次改动 Typert 产物契约的 DSH 版本，都需要插件跟版。
 - **选择不属于会话日志。** 它们会在重启后保留在 `envsel-state.json` 中，但不会从（或由）会话日志重放。
 
 ## License
