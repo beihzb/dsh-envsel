@@ -22,13 +22,14 @@ This is a **standalone, npm-installable DSH plugin**. It installs with `dsh plug
 
 ## Requirements
 
-- DeepSeek Harness **0.1.7-rc.1 or newer** (the web profile); verified on **0.1.7-rc.2**. The peer that pins this requirement is `@deepseek-ai/dsh-typert-protocol@^0.1.7-rc.1`; the other `@deepseek-ai/dsh-*` peers stay at `^0.1.0-rc.7` because those seams did not change.
+- DeepSeek Harness **0.1.7-rc.1 or newer** (the web profile), which now includes the **0.2.0-rc** line: every `@deepseek-ai/dsh-*` peer is declared as `^0.1.7-rc.1 || ^0.2.0-rc.1`. Verified on **0.1.7-rc.2**; the range also admits `0.2.0-rc.1`, `0.2.0-rc.2` and `0.2.1-alpha.2`. DSH skips a plugin bundle whose `@deepseek-ai/dsh*` peer range excludes the running runtime, so that range — not a version probe — decides whether this plugin loads.
 - `pnpm` on PATH (used by `dsh plugin`).
 
 ## DSH version compatibility
 
 | Plugin | DeepSeek Harness | Why |
 | --- | --- | --- |
+| **0.2.0** | **0.1.7-rc.1 or newer (0.1.7-rc and 0.2.0-rc lines)** | Covers DSH 0.2.0-rc: every `@deepseek-ai/dsh-*` peer now also admits `^0.2.0-rc.1`, so the startup compatibility gate no longer skips the bundle. The 18 peers were still pinned to `^0.1.7-rc.1`, whose `<0.2.0` upper bound rejects a 0.2.x runtime. |
 | **0.1.6** | **0.1.7-rc.1 or newer** | Fixes the header dropdown on 0.1.7: that release renamed the UI icon set (`IconCheckOutline14` became `IconCheckOutlineRegular`), so 0.1.5's button rendered an undefined element and the slot entry crashed. |
 | 0.1.5 | 0.1.7-rc.1 or newer | Emits strict Typert codecs with the `create()` factory that 0.1.7-rc.1 introduced. Host-side surfaces (`/env`, `session_env`, `DSH_ENV_*`) work; the header dropdown does not. |
 | 0.1.3 and earlier (published) | 0.1.0-rc.7 through 0.1.5-rc.x | Emits the eager `schema` instance those loaders validate. |
@@ -121,7 +122,7 @@ The build produces two artifacts: `lib/index.js` (the host plugin, loaded from t
 ## Known limitations
 
 - **No per-session runtime-context text.** The official `AssembleContext` has no agent binding, so the selection is not rendered into the model's system prompt. The model still sees the selection through `DSH_ENV_*` on every shell call and can query it with `/env` / `session_env`.
-- **Peer-bound to 0.1.7-rc.1 and newer.** The plugin declares `@deepseek-ai/dsh-*@^0.1.7-rc.1` peers and is verified up to `0.1.7-rc.2`. On DSH 0.1.0-rc.7 through 0.1.5-rc.x install `@beihaizb/dsh-envsel@0.1.3` (the last release published for that line) instead; a future DSH release that changes these APIs — or the Typert artifact contract again — needs a matching plugin update.
+- **Peer-bound to the 0.1.7-rc and 0.2.0-rc lines.** The plugin declares every `@deepseek-ai/dsh-*` peer as `^0.1.7-rc.1 || ^0.2.0-rc.1` and is verified up to `0.1.7-rc.2`; the 0.2.0-rc line is covered by that range. On DSH 0.1.0-rc.7 through 0.1.5-rc.x install `@beihaizb/dsh-envsel@0.1.3` (the last release published for that line) instead; a future DSH release that changes these APIs — or the Typert artifact contract again — needs a matching plugin update. On a line the peer range does not admit, grant an exact-version exemption (`dsh plugin allow-version`, or the plugin manager) rather than forcing the install.
 - **Selections are not part of the session log.** They survive restarts in `envsel-state.json` but are not replayed from (or carried by) session logs.
 
 ## License

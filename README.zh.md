@@ -17,13 +17,14 @@
 
 ## 环境要求
 
-- DeepSeek Harness **0.1.7-rc.1 或更新版本**（web profile）；已在 **0.1.7-rc.2** 上验证。锁定这一要求的是 Typert 协议 peer `@deepseek-ai/dsh-typert-protocol@^0.1.7-rc.1`；其余 `@deepseek-ai/dsh-*` peer 仍为 `^0.1.0-rc.7`，因为那些接口没有变化。
+- DeepSeek Harness **0.1.7-rc.1 或更新版本**（web profile），现在也覆盖 **0.2.0-rc** 线：所有 `@deepseek-ai/dsh-*` peer 都声明为 `^0.1.7-rc.1 || ^0.2.0-rc.1`。已在 **0.1.7-rc.2** 上验证；该区间同时接纳 `0.2.0-rc.1`、`0.2.0-rc.2` 与 `0.2.1-alpha.2`。DSH 会**跳过** `@deepseek-ai/dsh*` peer 区间不包含当前运行版本的插件 bundle——决定插件能否加载的是这个区间，而不是运行时的版本探测。
 - PATH 上有 `pnpm`（`dsh plugin` 会用到）。
 
 ## DSH 版本兼容性
 
 | 插件 | DeepSeek Harness | 原因 |
 | --- | --- | --- |
+| **0.2.0** | **0.1.7-rc.1 或更新版本（0.1.7-rc 与 0.2.0-rc 两条线）** | 覆盖 DSH 0.2.0-rc：18 个 `@deepseek-ai/dsh-*` peer 现在都接纳 `^0.2.0-rc.1`，启动期的兼容性门禁不再跳过整个 bundle。此前它们仍钉在 `^0.1.7-rc.1`，其上界 `<0.2.0` 会拒绝 0.2.x 运行时。 |
 | **0.1.6** | **0.1.7-rc.1 或更新版本** | 修复 0.1.7 上的头部下拉框：该版本改了 UI 图标命名（`IconCheckOutline14` 改为 `IconCheckOutlineRegular`），0.1.5 的按钮因此渲染出 undefined 元素、该 slot 条目崩溃。 |
 | 0.1.5 | 0.1.7-rc.1 或更新版本 | 发射带 `create()` 工厂的 strict Typert codec，该契约由 0.1.7-rc.1 引入。宿主侧（`/env`、`session_env`、`DSH_ENV_*`）可用；头部下拉框不可用。 |
 | 0.1.3 及更早（已发布） | 0.1.0-rc.7 至 0.1.5-rc.x | 发射这些 loader 所校验的即刻构造 `schema` 实例。 |
@@ -116,7 +117,7 @@ pnpm run test     # node:test 单元测试
 ## 已知限制
 
 - **没有按会话的 runtime-context 文本。** 官方 `AssembleContext` 没有 agent 绑定，因此选择不会渲染进模型的系统提示。模型仍会通过每次 shell 调用的 `DSH_ENV_*` 看到选择，并可用 `/env` / `session_env` 查询。
-- **peer 绑定 0.1.7-rc.1 及更新版本。** 插件声明 `@deepseek-ai/dsh-*@^0.1.7-rc.1` peer，并已在 `0.1.7-rc.2` 上验证。在 DSH 0.1.0-rc.7 至 0.1.5-rc.x 上请改装 `@beihaizb/dsh-envsel@0.1.3`（该线最后一个已发布版本）；未来改变这些 API、或再次改动 Typert 产物契约的 DSH 版本，都需要插件跟版。
+- **peer 绑定 0.1.7-rc 与 0.2.0-rc 两条线。** 插件把每个 `@deepseek-ai/dsh-*` peer 都声明为 `^0.1.7-rc.1 || ^0.2.0-rc.1`，并已在 `0.1.7-rc.2` 上验证；0.2.0-rc 线由该区间覆盖。在 DSH 0.1.0-rc.7 至 0.1.5-rc.x 上请改装 `@beihaizb/dsh-envsel@0.1.3`（该线最后一个已发布版本）；未来改变这些 API、或再次改动 Typert 产物契约的 DSH 版本，都需要插件跟版。若某条版本线不被 peer 区间接纳，请用精确版本豁免（`dsh plugin allow-version` 或插件管理器），不要强行安装。
 - **选择不属于会话日志。** 它们会在重启后保留在 `envsel-state.json` 中，但不会从（或由）会话日志重放。
 
 ## License
