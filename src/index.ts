@@ -3,10 +3,13 @@
  * slots (`python`, `r`, `cli`) each hold one first-priority environment drawn
  * from conda, standalone R installs, WSL distributions, or user-pinned custom
  * paths. Selections persist in a machine-local JSON store keyed by session id
- * (never the session event log — see state.ts), are injected into every shell
- * call as `DSH_ENV_*` facts, and are changed from the browser via the `/env`
- * command, the `session_env` model tool, or the `envsel` Typert Remote that
- * backs the header dropdown.
+ * (never the session event log — see state.ts), reach the model as a
+ * per-turn runtime-context block and as `DSH_ENV_*` facts on every shell call,
+ * and are changed from the browser via the `/env` command, the `session_env`
+ * model tool, or the `envsel` Typert Remote that backs the header dropdown.
+ * A session with no selection of its own inherits the nearest selecting
+ * session it descends from, so delegated work keeps the environment its
+ * parent chose.
  *
  * @module @beihaizb/dsh-envsel
  */
@@ -67,6 +70,26 @@ export const CONDA_COMMAND_DEFAULT = 'conda'
 /** Default per-probe watchdog timeout in milliseconds. */
 export const PROBE_TIMEOUT_MS_DEFAULT = 20000
 
+/**
+ * Order of envsel's runtime-context block. The official blocks occupy 110
+ * (sandbox policy), 115 (approval policy) and 120 (subagent delegation), so a
+ * selection is rendered after every policy block and before any later
+ * contribution — a stable position keeps the durable snapshot from churning.
+ */
+export const PROMPT_CONTEXT_ORDER = 130
+
+/**
+ * Maximum delegating-session hops walked when a session has no selection of
+ * its own. A DSH subagent runs in its own session (`origin: "subagent"`,
+ * `delegationDepth: n`) whose header still names the session that delegated to
+ * it, so the walk lets delegated work inherit the environment its parent
+ * chose instead of silently falling back to the host default.
+ */
+export const MAX_INHERIT_HOPS = 8
+
+/** Name of envsel's runtime-context contribution. */
+export const PROMPT_CONTEXT_NAME = 'envsel:session-environment'
+
 /** envsel deployment configuration (every field optional; schema defaults apply). */
 export interface Config {
   /** Catalog cache TTL in milliseconds. */
@@ -79,6 +102,13 @@ export interface Config {
   readonly wslEnabled?: boolean
   /** Whether the `session_env` model tool is registered. */
   readonly registerTool?: boolean
+  /**
+   * Whether the selection is contributed to the per-turn runtime context.
+   * Requires a host that binds the assembling agent to its context providers
+   * (DSH 0.2.0-rc.1 and newer); on an older host the contribution renders
+   * nothing and this switch has no effect.
+   */
+  readonly registerContext?: boolean
   /** Per-probe hard timeout in milliseconds (watchdog terminate). */
   readonly probeTimeoutMs?: number
 }
@@ -90,6 +120,7 @@ interface ResolvedConfig {
   readonly standaloneRRoots: readonly string[]
   readonly wslEnabled: boolean
   readonly registerTool: boolean
+  readonly registerContext: boolean
   readonly probeTimeoutMs: number
 }
 
@@ -113,8 +144,29 @@ function resolveConfig(input: Config = {}): ResolvedConfig {
     standaloneRRoots: [...(input.standaloneRRoots ?? [])],
     wslEnabled: input.wslEnabled ?? true,
     registerTool: input.registerTool ?? true,
+    registerContext: input.registerContext ?? true,
     probeTimeoutMs,
   }
+}
+
+/**
+ * Structural view of one runtime-context block, matching
+ * `PromptContext` in `@deepseek-ai/dsh-system-prompt`. Declared here rather
+ * than imported so this plugin needs no additional dependency for a single
+ * optional contribution.
+ */
+interface PromptContextContribution {
+  readonly name: string
+  readonly order: number
+  readonly text: string | ((context: { readonly agent?: Agent }) => string)
+}
+
+/**
+ * Structural view of the host's system-prompt service. Only `context` is
+ * used; the contribution is skipped entirely on a host that does not expose it.
+ */
+interface SystemPromptHost {
+  context(contribution: PromptContextContribution): () => void
 }
 
 /** Parse one `/env` command line. */
@@ -244,6 +296,42 @@ export function selectionContext(selection: EnvSelection): string {
   return blocks.join('\n\n')
 }
 
+/**
+ * Resolve a session's effective selection. A session's own entry always wins;
+ * otherwise the nearest selection owned by a session it descends from is used,
+ * walking `parentOf` at most `maxHops` times.
+ *
+ * Delegated work runs in its own session — a DSH subagent child records the
+ * session that delegated to it in `header.parentSession` — so without the walk
+ * a subagent would silently fall back to the host default instead of the
+ * environment the delegating session selected.
+ *
+ * Free of host services on purpose: the resolution order is the part worth
+ * testing, and it stays testable only while it needs nothing but the map.
+ *
+ * @param sessionId - the session to resolve.
+ * @param selections - folded selections keyed by session id.
+ * @param parentOf - the delegating session of a session, when one is known.
+ * @param maxHops - hard bound on the ancestor walk.
+ * @returns the effective selection, or an empty object when none applies.
+ */
+export function resolveSelection(
+  sessionId: SessionId,
+  selections: ReadonlyMap<string, EnvSelection>,
+  parentOf: (sessionId: SessionId) => SessionId | undefined,
+  maxHops: number = MAX_INHERIT_HOPS,
+): EnvSelection {
+  const own = selections.get(String(sessionId))
+  if (own !== undefined) return own
+  let cursor = parentOf(sessionId)
+  for (let hops = 0; cursor !== undefined && hops < maxHops; hops += 1) {
+    const inherited = selections.get(String(cursor))
+    if (inherited !== undefined) return inherited
+    cursor = parentOf(cursor)
+  }
+  return {}
+}
+
 /** Usage text for the /env command. */
 export function envHelpText(locale: 'en' | 'zh' = 'en'): string {
   return hostCopy(locale).help
@@ -357,7 +445,12 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
   }
 
   function selectionOfSession(sessionId: SessionId): EnvSelection {
-    return selections.get(String(sessionId)) ?? {}
+    return resolveSelection(sessionId, selections, parentOfSession)
+  }
+
+  /** The header-named delegating session of a live session, when it has one. */
+  function parentOfSession(sessionId: SessionId): SessionId | undefined {
+    return liveSession(sessionId)?.header.parentSession
   }
 
   function selectionOf(agent: Agent): EnvSelection {
@@ -598,11 +691,38 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
   }
   ctx.effect(() => ctx.shellEnv.register(contributor), 'envsel: shell facts')
 
+  // ── runtime-context contribution ───────────────────────────────────────────
+  // DSH assembles a "Current runtime context" snapshot before every model step.
+  // The assembling agent reaches each context provider only from 0.2.0-rc.1 on,
+  // which is what makes a per-session selection renderable as text at all. Until
+  // then the selection reached the model only as `DSH_ENV_*` shell facts, and a
+  // fact stays invisible until a shell call asks for it by name — so a model
+  // that simply runs `python script.py` never learns an environment was chosen.
+  // This block is the difference between an advisory variable and an
+  // instruction the model reads on every turn.
+  if (resolved.registerContext) {
+    ctx.inject(['systemPrompt'], (promptCtx) => {
+      const service = (promptCtx as unknown as { systemPrompt?: SystemPromptHost }).systemPrompt
+      if (service === undefined || typeof service.context !== 'function') return
+      promptCtx.effect(() => service.context({
+        name: PROMPT_CONTEXT_NAME,
+        order: PROMPT_CONTEXT_ORDER,
+        // An empty selection renders nothing, so a session (or subagent) with
+        // no selection adds no block and never churns the durable snapshot.
+        text: (context) => {
+          const agent = context?.agent
+          if (agent === undefined) return ''
+          return selectionContext(selectionOfSession(agent.session.header.id))
+        },
+      }), 'envsel: runtime context')
+    })
+  }
+
   // ── session_env model tool ──────────────────────────────────────────────────
   if (resolved.registerTool) {
     ctx.tools.register(defineTool({
       name: SESSION_ENV_TOOL,
-      description: 'Manage the environments selected for the current session (Jupyter-kernel-style): per-language slots python/r/cli, each holding one conda, standalone R, WSL, or user-pinned custom entry. action=list enumerates all entries; action=get returns the current selection; action=set assigns one slot (slot required, name="" clears that slot; kind is an optional disambiguation hint); action=pin remembers a host interpreter/install path in the machine-local cache (name = path); action=unpin forgets a cached path (name = custom:<name> or the original path). Takes effect from the next model turn via DSH_ENV_* shell variables.',
+      description: 'Manage the environments selected for the current session (Jupyter-kernel-style): per-language slots python/r/cli, each holding one conda, standalone R, WSL, or user-pinned custom entry. action=list enumerates all entries; action=get returns the current selection; action=set assigns one slot (slot required, name="" clears that slot; kind is an optional disambiguation hint); action=pin remembers a host interpreter/install path in the machine-local cache (name = path); action=unpin forgets a cached path (name = custom:<name> or the original path). The current selection is restated in the runtime context of every turn, so no separate query is needed to see it; a session with no selection of its own — a delegated subagent, for example — inherits the nearest selecting session it descends from.',
       parameters: {
         action: { type: 'string', required: true, enum: ['list', 'get', 'set', 'pin', 'unpin'], description: 'Operation to perform.' },
         slot: { type: 'string', enum: ['python', 'r', 'cli'], description: 'Slot to assign for action=set.' },

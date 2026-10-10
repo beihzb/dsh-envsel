@@ -15,6 +15,7 @@ This is a **standalone, npm-installable DSH plugin**. It installs with `dsh plug
 
 - **`/env` command** — read, assign, clear, and list environments from the chat.
 - **`session_env` model tool** — the agent can list, select, pin, and unpin environments on its own.
+- **Per-turn runtime-context block** — the selection is restated in the model's runtime context on every turn, so the model reads which environment this session runs in instead of having to think to ask. A session with no selection of its own — a delegated subagent, for example — inherits the nearest selecting session it descends from.
 - **`DSH_ENV_*` shell facts** — every shell call sees `DSH_ENV_PYTHON`, `DSH_ENV_RSCRIPT`, `DSH_ENV_CLI_PREFIX` for the session's selection.
 - **Header dropdown** — a per-language selector in the conversation header (Python / R / CLI tools), with an "Add path" form to pin any interpreter or install directory.
 - **Cross-platform discovery** — conda environments, standalone R (Windows `Program Files`, macOS framework + Homebrew, Linux `/opt/R`), WSL distributions on Windows, and manually pinned paths. WSL scanning is skipped automatically on non-Windows hosts.
@@ -29,6 +30,7 @@ This is a **standalone, npm-installable DSH plugin**. It installs with `dsh plug
 
 | Plugin | DeepSeek Harness | Why |
 | --- | --- | --- |
+| **0.3.0** | **0.2.0-rc.1 or newer** for the runtime-context block; still loads on 0.1.7-rc.1+ without it | Renders the selection into the per-turn runtime context and lets a session with no selection inherit the nearest selecting session it descends from, so delegated subagents keep their parent's environment. The block is contributed through `systemPrompt.context()`, whose text provider receives the assembling agent as `AssembleContext.agent` — a binding DSH gained in 0.2.0-rc.1. |
 | **0.2.0** | **0.1.7-rc.1 or newer (0.1.7-rc and 0.2.0-rc lines)** | Covers DSH 0.2.0-rc: every `@deepseek-ai/dsh-*` peer now also admits `^0.2.0-rc.1`, so the startup compatibility gate no longer skips the bundle. The 18 peers were still pinned to `^0.1.7-rc.1`, whose `<0.2.0` upper bound rejects a 0.2.x runtime. |
 | **0.1.6** | **0.1.7-rc.1 or newer** | Fixes the header dropdown on 0.1.7: that release renamed the UI icon set (`IconCheckOutline14` became `IconCheckOutlineRegular`), so 0.1.5's button rendered an undefined element and the slot entry crashed. |
 | 0.1.5 | 0.1.7-rc.1 or newer | Emits strict Typert codecs with the `create()` factory that 0.1.7-rc.1 introduced. Host-side surfaces (`/env`, `session_env`, `DSH_ENV_*`) work; the header dropdown does not. |
@@ -92,6 +94,7 @@ The plugin works with no configuration. Optional `config` on the `envsel` row in
 | `standaloneRRoots` | `[]` | Extra standalone-R roots scanned after the platform defaults. |
 | `wslEnabled` | `true` | Whether WSL discovery is enabled (Windows only). |
 | `registerTool` | `true` | Whether the `session_env` model tool is registered. |
+| `registerContext` | `true` | Whether the selection is contributed to the per-turn runtime context (needs DSH 0.2.0-rc.1 or newer; a host without the binding renders nothing). |
 | `probeTimeoutMs` | `20000` | Per-probe watchdog timeout in milliseconds. |
 
 Example:
@@ -109,6 +112,8 @@ Example:
 
 Selections persist in a machine-local JSON store (`$DSH_HOME/envsel-state.json`, keyed by session id) — **not** in the session event log. The harness's session-persistence reader refuses a log containing an event type it does not know unless the event is marked ignorable, and `Session.append` provides no way for a downstream plugin to set that marker. Writing selection changes into the log would make the owning session unreadable after a restart, so this plugin owns its own durable state instead.
 
+A lookup uses the session's own entry when it has one, and otherwise walks the delegating-session chain (`SessionHeader.parentSession`) for the nearest session that selected anything. DSH gives every delegated subagent its own session, so this is what keeps a subagent's shell calls and notebook kernels on the environment the delegating session chose rather than the host default. The walk is bounded, skips the whole chain when nothing matches, and terminates on a lineage cycle.
+
 ## Development
 
 ```sh
@@ -121,7 +126,7 @@ The build produces two artifacts: `lib/index.js` (the host plugin, loaded from t
 
 ## Known limitations
 
-- **No per-session runtime-context text.** The official `AssembleContext` has no agent binding, so the selection is not rendered into the model's system prompt. The model still sees the selection through `DSH_ENV_*` on every shell call and can query it with `/env` / `session_env`.
+- **The runtime-context block needs DSH 0.2.0-rc.1 or newer.** It is contributed through `systemPrompt.context()`, and the text provider is handed the assembling agent as `AssembleContext.agent` — a binding DSH added in 0.2.0-rc.1. On 0.1.7-rc the block renders nothing and the selection reaches the model only as `DSH_ENV_*` shell facts plus `/env` and `session_env`; nothing else changes. Set `registerContext: false` to turn the block off on any host.
 - **Peer-bound to the 0.1.7-rc and 0.2.0-rc lines.** The plugin declares every `@deepseek-ai/dsh-*` peer as `^0.1.7-rc.1 || ^0.2.0-rc.1` and is verified up to `0.1.7-rc.2`; the 0.2.0-rc line is covered by that range. On DSH 0.1.0-rc.7 through 0.1.5-rc.x install `@beihaizb/dsh-envsel@0.1.3` (the last release published for that line) instead; a future DSH release that changes these APIs — or the Typert artifact contract again — needs a matching plugin update. On a line the peer range does not admit, grant an exact-version exemption (`dsh plugin allow-version`, or the plugin manager) rather than forcing the install.
 - **Selections are not part of the session log.** They survive restarts in `envsel-state.json` but are not replayed from (or carried by) session logs.
 

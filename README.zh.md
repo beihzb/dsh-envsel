@@ -10,6 +10,7 @@
 
 - **`/env` 命令** —— 在对话中查看、设置、清空和列出环境。
 - **`session_env` 模型工具** —— 智能体可以自行列出、选择、固定和取消固定环境。
+- **每轮运行时上下文块** —— 每一轮都会把当前选择写进模型的运行时上下文，模型因此能直接读到本会话用的是哪个环境，而不必「想起来去问」。自身没有选择的会话（例如被派出的子代理）会继承它向上最近的那个有选择的会话。
 - **`DSH_ENV_*` shell 事实** —— 每次 shell 调用都会看到会话所选环境的 `DSH_ENV_PYTHON`、`DSH_ENV_RSCRIPT`、`DSH_ENV_CLI_PREFIX`。
 - **头部下拉框** —— 会话头部提供按语言（Python / R / CLI 工具）选择的面板，并带「添加路径」表单，可固定任意解释器或安装目录。
 - **跨平台发现** —— conda 环境、独立 R（Windows `Program Files`、macOS 框架 + Homebrew、Linux `/opt/R`）、Windows 上的 WSL 发行版，以及手动固定的路径。WSL 扫描在非 Windows 主机上自动跳过。
@@ -24,6 +25,7 @@
 
 | 插件 | DeepSeek Harness | 原因 |
 | --- | --- | --- |
+| **0.3.0** | **0.2.0-rc.1 或更新版本**才有运行时上下文块；在 0.1.7-rc.1+ 上仍可加载，只是没有该块 | 把选择渲染进每轮运行时上下文，并让自身没有选择的会话继承向上最近的有选择的会话，因此被派出的子代理能沿用父会话的环境。该块通过 `systemPrompt.context()` 贡献，其文本提供者会收到组装中的 agent（`AssembleContext.agent`）——这个绑定是 DSH 0.2.0-rc.1 才提供的。 |
 | **0.2.0** | **0.1.7-rc.1 或更新版本（0.1.7-rc 与 0.2.0-rc 两条线）** | 覆盖 DSH 0.2.0-rc：18 个 `@deepseek-ai/dsh-*` peer 现在都接纳 `^0.2.0-rc.1`，启动期的兼容性门禁不再跳过整个 bundle。此前它们仍钉在 `^0.1.7-rc.1`，其上界 `<0.2.0` 会拒绝 0.2.x 运行时。 |
 | **0.1.6** | **0.1.7-rc.1 或更新版本** | 修复 0.1.7 上的头部下拉框：该版本改了 UI 图标命名（`IconCheckOutline14` 改为 `IconCheckOutlineRegular`），0.1.5 的按钮因此渲染出 undefined 元素、该 slot 条目崩溃。 |
 | 0.1.5 | 0.1.7-rc.1 或更新版本 | 发射带 `create()` 工厂的 strict Typert codec，该契约由 0.1.7-rc.1 引入。宿主侧（`/env`、`session_env`、`DSH_ENV_*`）可用；头部下拉框不可用。 |
@@ -87,6 +89,7 @@ dsh plugin --profile web add "file:/绝对/路径/到/本仓库"
 | `standaloneRRoots` | `[]` | 在平台默认值之后额外扫描的独立 R 根目录。 |
 | `wslEnabled` | `true` | 是否启用 WSL 发现（仅 Windows）。 |
 | `registerTool` | `true` | 是否注册 `session_env` 模型工具。 |
+| `registerContext` | `true` | 是否把选择贡献到每轮运行时上下文（需要 DSH 0.2.0-rc.1 或更新版本；没有该绑定的宿主不会渲染任何内容）。 |
 | `probeTimeoutMs` | `20000` | 每次探测的看门狗超时（毫秒）。 |
 
 示例：
@@ -104,6 +107,8 @@ dsh plugin --profile web add "file:/绝对/路径/到/本仓库"
 
 选择保存在本机 JSON 存储（`$DSH_HOME/envsel-state.json`，按会话 id 键控）中 —— **而不是会话事件日志**。harness 的 session-persistence 读取器会拒绝包含未知事件类型的日志（除非事件标记为可忽略），而 `Session.append` 没有为下游插件提供设置该标记的途径。把选择变更写进日志会让该会话在重启后无法读取，因此本插件自带独立的状态存储。
 
+查找时优先用该会话自己的条目；没有则沿派出链（`SessionHeader.parentSession`）向上找最近的有选择的会话。DSH 给每个被派出的子代理分配独立会话，所以这一步决定了子代理的 shell 调用与 notebook 内核是沿用父会话选择的环境，还是悄悄退回宿主默认环境。该上行有跳数上限，整条链都没有匹配时返回空选择，遇到谱系成环也会终止。
+
 ## 开发
 
 ```sh
@@ -116,7 +121,7 @@ pnpm run test     # node:test 单元测试
 
 ## 已知限制
 
-- **没有按会话的 runtime-context 文本。** 官方 `AssembleContext` 没有 agent 绑定，因此选择不会渲染进模型的系统提示。模型仍会通过每次 shell 调用的 `DSH_ENV_*` 看到选择，并可用 `/env` / `session_env` 查询。
+- **运行时上下文块需要 DSH 0.2.0-rc.1 或更新版本。** 它通过 `systemPrompt.context()` 贡献，其文本提供者会收到组装中的 agent（`AssembleContext.agent`）——这个绑定是 DSH 0.2.0-rc.1 才加入的。在 0.1.7-rc 上该块不渲染任何内容，选择只能通过 `DSH_ENV_*` shell 事实以及 `/env`、`session_env` 到达模型；其余行为不变。在任何宿主上都可用 `registerContext: false` 关闭该块。
 - **peer 绑定 0.1.7-rc 与 0.2.0-rc 两条线。** 插件把每个 `@deepseek-ai/dsh-*` peer 都声明为 `^0.1.7-rc.1 || ^0.2.0-rc.1`，并已在 `0.1.7-rc.2` 上验证；0.2.0-rc 线由该区间覆盖。在 DSH 0.1.0-rc.7 至 0.1.5-rc.x 上请改装 `@beihaizb/dsh-envsel@0.1.3`（该线最后一个已发布版本）；未来改变这些 API、或再次改动 Typert 产物契约的 DSH 版本，都需要插件跟版。若某条版本线不被 peer 区间接纳，请用精确版本豁免（`dsh plugin allow-version` 或插件管理器），不要强行安装。
 - **选择不属于会话日志。** 它们会在重启后保留在 `envsel-state.json` 中，但不会从（或由）会话日志重放。
 
