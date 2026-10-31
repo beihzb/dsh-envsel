@@ -165,4 +165,30 @@ describe('selectionContext', () => {
     // The guidance follows the host shell family, so the assertion does too.
     assert.match(text, process.platform === 'win32' ? /\$env:PATH = "/u : /export PATH="/u)
   })
+
+  it('mentions the R that a selected conda python env also ships', () => {
+    // conda envs commonly carry R next to Python; without this line the model
+    // only sees the R slot and can mix two different R installations.
+    const entry: EnvEntry = { ...conda('scRNAv2'), rscript: 'C:\\envs\\scRNAv2\\Scripts\\Rscript.exe' }
+    const text = selectionContext({ python: entry })
+    assert.match(text, /This environment also provides R: .*Scripts\\Rscript\.exe/)
+  })
+
+  it('stays silent about R when the python env has none', () => {
+    const text = selectionContext({ python: conda('evo') })
+    assert.doesNotMatch(text, /also provides R/)
+  })
+
+  it('does not repeat R when the same install fills both slots', () => {
+    const shared: EnvEntry = { ...conda('scRNAv2'), rscript: 'C:\\envs\\scRNAv2\\Scripts\\Rscript.exe' }
+    const text = selectionContext({ python: shared, r: { ...shared } })
+    assert.doesNotMatch(text, /also provides R/)
+    assert.match(text, /Session R env \(user-selected\): scRNAv2/)
+  })
+
+  it('repeats R when the R slot points at a different install', () => {
+    const shared: EnvEntry = { ...conda('scRNAv2'), rscript: 'C:\\envs\\scRNAv2\\Scripts\\Rscript.exe' }
+    const text = selectionContext({ python: shared, r: standaloneR('R-4.5.1') })
+    assert.match(text, /also provides R/)
+  })
 })

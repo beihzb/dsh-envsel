@@ -16,6 +16,7 @@ This is a **standalone, npm-installable DSH plugin**. It installs with `dsh plug
 - **`/env` command** — read, assign, clear, and list environments from the chat.
 - **`session_env` model tool** — the agent can list, select, pin, and unpin environments on its own.
 - **Per-turn runtime-context block** — the selection is restated in the model's runtime context on every turn, so the model reads which environment this session runs in instead of having to think to ask. A session with no selection of its own — a delegated subagent, for example — inherits the nearest selecting session it descends from.
+- **States the R that a conda env also carries** — when the selected Python environment ships `Rscript` of its own, the runtime block says so (`- This environment also provides R: …`). conda environments routinely carry R beside Python, and without that line the model only sees the R slot and can mix two different R installations. It is omitted when the same install fills both slots.
 - **`DSH_ENV_*` shell facts** — every shell call sees `DSH_ENV_PYTHON`, `DSH_ENV_RSCRIPT`, `DSH_ENV_CLI_PREFIX` for the session's selection.
 - **Header dropdown** — a per-language selector in the conversation header (Python / R / CLI tools), with an "Add path" form to pin any interpreter or install directory.
 - **Cross-platform discovery** — conda environments, standalone R (Windows `Program Files`, macOS framework + Homebrew, Linux `/opt/R`), WSL distributions on Windows, and manually pinned paths. WSL scanning is skipped automatically on non-Windows hosts.
@@ -30,6 +31,7 @@ This is a **standalone, npm-installable DSH plugin**. It installs with `dsh plug
 
 | Plugin | DeepSeek Harness | Why |
 | --- | --- | --- |
+| **0.3.1** | **0.2.0-rc.1 or newer** for the runtime-context block; still loads on 0.1.7-rc.1+ without it | Adds the "- This environment also provides R: …" line, so a selected conda Python environment that ships its own `Rscript` is reported instead of being invisible next to the R slot. Rendering only — no new DSH API. |
 | **0.3.0** | **0.2.0-rc.1 or newer** for the runtime-context block; still loads on 0.1.7-rc.1+ without it | Renders the selection into the per-turn runtime context and lets a session with no selection inherit the nearest selecting session it descends from, so delegated subagents keep their parent's environment. The block is contributed through `systemPrompt.context()`, whose text provider receives the assembling agent as `AssembleContext.agent` — a binding DSH gained in 0.2.0-rc.1. |
 | **0.2.0** | **0.1.7-rc.1 or newer (0.1.7-rc and 0.2.0-rc lines)** | Covers DSH 0.2.0-rc: every `@deepseek-ai/dsh-*` peer now also admits `^0.2.0-rc.1`, so the startup compatibility gate no longer skips the bundle. The 18 peers were still pinned to `^0.1.7-rc.1`, whose `<0.2.0` upper bound rejects a 0.2.x runtime. |
 | **0.1.6** | **0.1.7-rc.1 or newer** | Fixes the header dropdown on 0.1.7: that release renamed the UI icon set (`IconCheckOutline14` became `IconCheckOutlineRegular`), so 0.1.5's button rendered an undefined element and the slot entry crashed. |

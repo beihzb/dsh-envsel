@@ -260,6 +260,14 @@ export function describeEntry(entry: EnvEntry): string {
   return `${address} — ${entry.prefix}${badges.length > 0 ? ` (${badges.join(', ')})` : ''}`
 }
 
+/** True when two catalog entries point at the same install prefix. */
+function sameInstall(a: EnvEntry, b: EnvEntry): boolean {
+  const norm = (entry: EnvEntry): string =>
+    String(entry.prefix ?? '').replace(/[\\/]+$/, '').toLowerCase()
+  const left = norm(a)
+  return left.length > 0 && left === norm(b)
+}
+
 /** Render the runtime-context block for one selection. */
 export function selectionContext(selection: EnvSelection): string {
   const blocks: string[] = []
@@ -272,6 +280,15 @@ export function selectionContext(selection: EnvSelection): string {
       `Use it for all Python work in this session: ${run} script.py (absolute path, no activation needed).`,
     ]
     if (python.kind === 'wsl') lines.push('- WSL: pass Windows paths as /mnt/c/<drive>/<path>.')
+    // A conda env commonly ships R next to Python. Say so, otherwise the model
+    // only learns about the R slot and may mix two different R installations.
+    const sameAsRSlot = selection.r !== undefined && sameInstall(python, selection.r)
+    if (!sameAsRSlot) {
+      const rscript = python.rscriptCommand ?? python.rscript
+      if (typeof rscript === 'string' && rscript.length > 0) {
+        lines.push(`- This environment also provides R: ${rscript}`)
+      }
+    }
     blocks.push(lines.join('\n'))
   }
   const r = selection.r
